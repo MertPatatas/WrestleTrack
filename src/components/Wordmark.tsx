@@ -1,14 +1,15 @@
 import Link from 'next/link';
-import { Logo } from './Logo';
 
+// Marca (anillo + W) y rótulo, a partir de los PNG de public/brand.
 export function Wordmark({ large = false }: { large?: boolean }) {
   return (
-    <Link href="/" className={large ? 'wordmark wordmark--large' : 'wordmark'} aria-label="WrestleTrack, inicio">
-      <Logo size={large ? 34 : 28} />
-      <span>
-        <span className="wm-a">Wrestle</span>
-        <span className="wm-b">Track</span>
-      </span>
+    <Link
+      href="/"
+      className={large ? 'wordmark wordmark--large' : 'wordmark'}
+      aria-label="WrestleTrack, inicio"
+    >
+      <img className="wordmark-mark" src="/brand/logo-mark.png" alt="" />
+      <img className="wordmark-text" src="/brand/logo-text.png" alt="" />
     </Link>
   );
 }

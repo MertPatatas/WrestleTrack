@@ -129,19 +129,22 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
 }
-.wordmark--large {
-  font-size: 28px;
+.wordmark-mark {
+  display: block;
+  height: 32px;
+  width: auto;
 }
-.wm-a {
-  color: var(--ivory);
+.wordmark-text {
+  display: block;
+  height: 17px;
+  width: auto;
 }
-.wm-b {
-  color: var(--gold);
+.wordmark--large .wordmark-mark {
+  height: 42px;
+}
+.wordmark--large .wordmark-text {
+  height: 21px;
 }
 
 /* ---------- Cabeceras y secciones ---------- */
