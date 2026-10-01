@@ -17,7 +17,7 @@ export function NewsView() {
     <>
       <PageHeader title="Noticias" />
       <SampleNotice />
-      <FilterChips value={filter} onChange={setFilter} />
+      <FilterChips value={filter} onChange={setFilter} includeGeneral />
       <div className="stack stack--grid">
         {items.map((n) => (
           <NewsCard key={n.id} item={n} now={now} />

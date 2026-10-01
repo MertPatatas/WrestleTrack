@@ -8,13 +8,17 @@ export type Filter = PromotionId | 'all';
 export function FilterChips({
   value,
   onChange,
+  includeGeneral = false,
 }: {
   value: Filter;
   onChange: (next: Filter) => void;
+  includeGeneral?: boolean;
 }) {
   const options: { id: Filter; label: string }[] = [
     { id: 'all', label: 'Todas' },
-    ...promotions.map((p) => ({ id: p.id as Filter, label: p.name })),
+    ...promotions
+      .filter((p) => includeGeneral || p.id !== 'other')
+      .map((p) => ({ id: p.id as Filter, label: p.name })),
   ];
   return (
     <div className="chips" role="group" aria-label="Filtrar por promoción">

@@ -27,7 +27,9 @@ export function ProfileView() {
       <section>
         <h2 className="section-title section-title--solo">Promociones que sigo</h2>
         <div className="card card--list">
-          {promotions.map((p) => (
+          {promotions
+            .filter((p) => p.id !== 'other')
+            .map((p) => (
             <div key={p.id} className="row">
               <span id={`fav-${p.id}`}>{p.name}</span>
               <button
