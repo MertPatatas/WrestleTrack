@@ -1,30 +1,47 @@
 # WrestleTrack
 
-App móvil (Android e iOS) con noticias de lucha libre, resúmenes de storylines y calendario de shows.
+Aplicación web (instalable como app) con noticias de lucha libre, resúmenes de storylines y calendario de shows.
 Promociones principales: WWE (Raw, SmackDown, NXT y PLE), AEW, CMLL, AAA y NJPW.
 
 Estado: esqueleto con datos de ejemplo. Ver `docs/ROADMAP.md`.
 
 ## Stack
-Expo (React Native) + TypeScript + Expo Router. Backend previsto: Supabase (`supabase/schema.sql`).
+Next.js (App Router) + React + TypeScript. Backend previsto: Supabase (`supabase/schema.sql`).
 
 ## Arrancar
 ```bash
 npm install
-npx expo start
+npm run dev
 ```
-Escanea el QR con Expo Go (Android/iOS) o pulsa `a` / `i` para un emulador.
+Abre http://localhost:3000. Para ver la versión móvil, reduce la ventana del navegador o usa las
+herramientas de desarrollador (F12) con el modo dispositivo. Por encima de 960 px de ancho aparece
+el diseño de escritorio (barra lateral y columna de próximos shows).
+
+Versión de producción local (aquí sí se activa el service worker):
+```bash
+npm run build
+npm start
+```
+
+## Instalar como aplicación (PWA)
+La instalación necesita HTTPS, así que funciona en la versión publicada (Vercel, Netlify, Cloudflare Pages...).
+- Chrome / Edge (escritorio y Android): icono de instalar en la barra de direcciones, o botón en la pestaña Perfil.
+- iPhone / iPad (Safari): Compartir > Añadir a pantalla de inicio.
 
 ## Estructura
 ```
-app/            pantallas (Expo Router): Inicio, Noticias, Storylines, Shows, Perfil
-src/components/ componentes de UI
-src/data/       tipos y datos de ejemplo (mock.ts)
-src/lib/        utilidades (fechas y zona horaria)
-src/theme.ts    colores y espaciado
-supabase/       esquema de base de datos
-docs/           hoja de ruta
+src/app/          rutas y metadatos (layout, manifest, páginas)
+src/views/        pantallas (Inicio, Noticias, Storylines, Shows, Perfil)
+src/components/   interfaz: AppShell (móvil/escritorio), tarjetas, filtros...
+src/data/         tipos, datos de ejemplo y useAppData (único punto de acceso a datos)
+src/lib/          utilidades (fechas, useMounted)
+public/           service worker e iconos
+supabase/         esquema de base de datos
 ```
 
-## Antes de publicar
-Cambia `ios.bundleIdentifier` y `android.package` en `app.json` (el script deja `com.example.wrestletrack` como marcador) por un identificador tuyo definitivo.
+## Notas
+- Las horas se muestran en la zona horaria del navegador; por eso las pantallas con fechas se
+  pintan tras montar (`useMounted`), para evitar desajustes entre servidor y navegador.
+- Los iconos y el logo son provisionales. Sustituir `public/icons/*`, `src/app/icon.png`,
+  `src/app/apple-icon.png` y `src/components/Logo.tsx` por el logo definitivo.
+- `package.json` usa `latest`; al instalar, `package-lock.json` fija las versiones. Súbelo a Git.

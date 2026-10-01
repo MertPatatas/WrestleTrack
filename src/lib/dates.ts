@@ -1,12 +1,12 @@
-export function timeAgo(iso: string, now: Date = new Date()): string {
-  const mins = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60000));
+export function timeAgo(iso: string, now: number = Date.now()): string {
+  const mins = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60000));
   if (mins < 60) return `Hace ${Math.max(mins, 1)} min`;
   const hours = Math.round(mins / 60);
   if (hours < 24) return `Hace ${hours} h`;
   return `Hace ${Math.round(hours / 24)} d`;
 }
 
-// Usa la zona horaria del dispositivo.
+// Usa la zona horaria del navegador. Llamar solo en el cliente (tras montar).
 export function showDateParts(iso: string) {
   const d = new Date(iso);
   return {
