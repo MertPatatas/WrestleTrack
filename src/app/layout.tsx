@@ -1,6 +1,3 @@
-import { ClerkProvider } from '@clerk/nextjs';
-import { enUS, esES } from '@clerk/localizations';
-import { dark } from '@clerk/themes';
 import type { Metadata, Viewport } from 'next';
 import { Barlow, Barlow_Condensed } from 'next/font/google';
 import type { ReactNode } from 'react';
@@ -49,23 +46,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={lang} className={`${barlow.variable} ${barlowCondensed.variable}`}>
       <body>
-        {/* Clerk: cuentas de usuario (inicio de sesión con código por email) */}
-        <ClerkProvider
-          localization={lang === 'es' ? esES : enUS}
-          appearance={{
-            theme: dark,
-            variables: {
-              colorPrimary: '#c99a4b',
-              colorBackground: '#17171a',
-              fontFamily: 'var(--font-barlow), system-ui, sans-serif',
-              borderRadius: '10px',
-            },
-          }}
-        >
-          <SettingsProvider initialSettings={settings} deviceLang={device.lang} deviceLocale={device.locale}>
-            <AppShell>{children}</AppShell>
-          </SettingsProvider>
-        </ClerkProvider>
+        <SettingsProvider initialSettings={settings} deviceLang={device.lang} deviceLocale={device.locale}>
+          <AppShell>{children}</AppShell>
+        </SettingsProvider>
         <ServiceWorkerRegister />
       </body>
     </html>

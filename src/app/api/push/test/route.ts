@@ -1,28 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { translate } from '../../../../i18n/messages';
-import { db, type ProfileRow, type SubscriptionRow } from '../../../../lib/server/db';
-import { errorResponse, requireUser } from '../../../../lib/server/profile';
+import { errorResponse, findDevice, notFound, rowToSettings } from '../../../../lib/server/devices';
 import { pushConfigured, sendToSubscriptions } from '../../../../lib/server/push';
-import { profileLang } from '../../../../lib/server/dispatch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// POST: manda una notificación de prueba a todos los dispositivos del usuario
-export async function POST() {
-  const user = await requireUser();
-  if ('response' in user) return user.response;
+// POST: manda una notificación de prueba a este dispositivo
+export async function POST(request: NextRequest) {
   if (!pushConfigured()) return NextResponse.json({ error: 'Notificaciones no configuradas' }, { status: 503 });
-
+  const body = (await request.json().catch(() => ({}))) as { endpoint?: string; token?: string };
   try {
-    const sql = await db();
-    const subs = (await sql.query('select * from push_subscriptions where user_id = $1', [user.userId])) as SubscriptionRow[];
-    if (subs.length === 0) return NextResponse.json({ error: 'Ningún dispositivo suscrito' }, { status: 404 });
-    const profile = ((await sql.query('select * from profiles where user_id = $1', [user.userId])) as ProfileRow[])[0];
-    const lang = profileLang(profile);
-    const result = await sendToSubscriptions(subs, {
-      title: translate(lang, 'push.testTitle'),
-      body: translate(lang, 'push.testBody'),
+    const device = await findDevice(body.endpoint, body.token);
+    if (!device) return notFound();
+    const { language } = rowToSettings(device);
+    const result = await sendToSubscriptions([device], {
+      title: translate(language, 'push.testTitle'),
+      body: translate(language, 'push.testBody'),
       url: '/perfil',
       tag: 'test',
     });

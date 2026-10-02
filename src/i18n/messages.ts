@@ -91,18 +91,9 @@ const es = {
 
   'profile.followingHelp': 'Las notificaciones solo te avisarán de estas promociones.',
 
-  'account.title': 'Cuenta',
-  'account.signedOutText':
-    'Inicia sesión para guardar tus favoritos y ajustes en todos tus dispositivos y recibir notificaciones en el teléfono.',
-  'account.signIn': 'Iniciar sesión',
-  'account.signOut': 'Cerrar sesión',
-  'account.signedInAs': 'Sesión iniciada como {email}',
-  'account.syncLoading': 'Sincronizando…',
-  'account.syncSynced': 'Favoritos y ajustes sincronizados en todos tus dispositivos.',
-  'account.syncError': 'No se pudieron sincronizar los ajustes. Se reintentará al recargar la página.',
-
   'notif.title': 'Notificaciones',
-  'notif.signInFirst': 'Inicia sesión para recibir notificaciones en tu teléfono.',
+  'notif.deviceNote':
+    'Estas preferencias son de este dispositivo. Si quieres avisos en otro (por ejemplo, el ordenador), actívalos también allí.',
   'notif.enable': 'Activar en este dispositivo',
   'notif.enabled': 'Activadas en este dispositivo.',
   'notif.disable': 'Desactivar',
@@ -251,17 +242,9 @@ const en: Messages = {
 
   'profile.followingHelp': 'Notifications will only cover these promotions.',
 
-  'account.title': 'Account',
-  'account.signedOutText': 'Sign in to keep your favorites and settings on all your devices and get notifications on your phone.',
-  'account.signIn': 'Sign in',
-  'account.signOut': 'Sign out',
-  'account.signedInAs': 'Signed in as {email}',
-  'account.syncLoading': 'Syncing…',
-  'account.syncSynced': 'Favorites and settings synced across your devices.',
-  'account.syncError': 'Settings could not be synced. It will retry when you reload the page.',
-
   'notif.title': 'Notifications',
-  'notif.signInFirst': 'Sign in to get notifications on your phone.',
+  'notif.deviceNote':
+    'These preferences belong to this device. If you also want alerts on another one (your computer, for example), turn them on there too.',
   'notif.enable': 'Turn on for this device',
   'notif.enabled': 'On for this device.',
   'notif.disable': 'Turn off',

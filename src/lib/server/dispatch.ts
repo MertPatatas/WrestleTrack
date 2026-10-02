@@ -1,12 +1,14 @@
 import 'server-only';
 import type { Show } from '../../data/types';
-import { isLang, type Lang } from '../../i18n/config';
+import type { Lang } from '../../i18n/config';
 import { translate, type MessageKey } from '../../i18n/messages';
-import { sanitizePrefs, type NotificationPrefs } from '../notifications/prefs';
+import type { DeviceSettings } from '../notifications/device';
+import type { NotificationPrefs } from '../notifications/prefs';
 import { buildSchedule } from '../schedule/build';
 import type { ScheduleResponse } from '../schedule/load';
 import { utcToZoned } from '../schedule/time';
-import { db, type ProfileRow, type SubscriptionRow } from './db';
+import { db, type DeviceRow } from './db';
+import { rowToSettings } from './devices';
 import { sendToSubscriptions, type PushPayload } from './push';
 
 // Se ejecuta cada 5 minutos (Upstash QStash → /api/push/dispatch).
@@ -15,22 +17,8 @@ const WINDOW_MS = 15 * 60_000;
 const DIGEST_WINDOW_MIN = 15;
 const PROMO_NAMES: Record<string, string> = { wwe: 'WWE', aew: 'AEW', cmll: 'CMLL', aaa: 'AAA', njpw: 'NJPW', other: '' };
 
-export function profileLang(p: ProfileRow | undefined): Lang {
-  if (p && isLang(p.language)) return p.language;
-  if (p?.device_language && isLang(p.device_language)) return p.device_language;
-  return 'es';
-}
-
-function profileTimeZone(p: ProfileRow): string {
-  return p.time_zone !== 'auto' ? p.time_zone : (p.device_time_zone ?? 'Europe/Madrid');
-}
-
-function profileLocale(p: ProfileRow, lang: Lang): string {
-  return p.device_locale?.slice(0, 2).toLowerCase() === lang ? p.device_locale : lang === 'es' ? 'es-ES' : 'en-US';
-}
-
-function wants(show: Show, p: ProfileRow, prefs: NotificationPrefs): boolean {
-  if (!p.favorites.includes(show.promotion)) return false;
+function wants(show: Show, s: DeviceSettings, prefs: NotificationPrefs): boolean {
+  if (!(s.favorites as string[]).includes(show.promotion)) return false;
   if (prefs.kinds === 'weekly') return show.kind === 'weekly';
   if (prefs.kinds === 'special') return show.kind !== 'weekly';
   return true;
@@ -109,7 +97,7 @@ function digest(shows: Show[], weekly: boolean, c: Ctx): PushPayload | null {
 }
 
 export interface DispatchResult {
-  users: number;
+  devices: number;
   notifications: number;
   newEvents: number;
 }
@@ -119,7 +107,14 @@ export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events
   const shows = buildSchedule(now, { pastDays: 1, futureDays: 8, episodes: data.episodes, autoEvents: data.events });
 
   // ---- Eventos recién anunciados ----
-  const upcomingSpecials = shows.filter((s) => s.kind !== 'weekly' && new Date(s.startsAt).getTime() > now);
+  // Todo lo anunciado (no solo los próximos días): si no, un evento ya conocido parecería
+  // nuevo al acercarse, y uno anunciado para dentro de meses no se detectaría
+  const upcomingSpecials = buildSchedule(now, {
+    pastDays: 0,
+    futureDays: 400,
+    episodes: data.episodes,
+    autoEvents: data.events,
+  }).filter((s) => s.kind !== 'weekly' && new Date(s.startsAt).getTime() > now);
   const keys = [...new Set(upcomingSpecials.map(eventKey))];
   const firstRun = ((await sql.query('select count(*)::int as n from seen_events')) as { n: number }[])[0].n === 0;
   const inserted = keys.length
@@ -132,34 +127,24 @@ export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events
   const newKeys = new Set(firstRun ? [] : inserted.map((r) => r.key));
   const newEvents = upcomingSpecials.filter((s) => newKeys.has(eventKey(s)));
 
-  // ---- Usuarios con algún dispositivo suscrito ----
-  const profiles = (await sql.query(
-    'select p.* from profiles p where exists (select 1 from push_subscriptions s where s.user_id = p.user_id)',
-  )) as ProfileRow[];
-  if (profiles.length === 0) return { users: 0, notifications: 0, newEvents: newEvents.length };
-  const subs = (await sql.query('select * from push_subscriptions where user_id = any($1)', [
-    profiles.map((p) => p.user_id),
-  ])) as SubscriptionRow[];
+  // ---- Dispositivos con las notificaciones activadas ----
+  const devices = (await sql.query('select * from devices')) as DeviceRow[];
+  if (devices.length === 0) return { devices: 0, notifications: 0, newEvents: newEvents.length };
 
   let notifications = 0;
 
   await Promise.all(
-    profiles.map(async (p) => {
-      const prefs = sanitizePrefs({
-        kinds: p.notify_kinds as NotificationPrefs['kinds'],
-        leads: p.notify_leads,
-        announce: p.notify_announce,
-        digest: p.digest as NotificationPrefs['digest'],
-        digestHour: p.digest_hour,
-      });
-      const lang = profileLang(p);
+    devices.map(async (device) => {
+      const settings = rowToSettings(device);
+      const prefs = settings.prefs;
+      const lang = settings.language;
       const ctx: Ctx = {
         lang,
-        tz: profileTimeZone(p),
-        locale: profileLocale(p, lang),
+        tz: settings.timeZone,
+        locale: settings.locale.slice(0, 2).toLowerCase() === lang ? settings.locale : lang === 'es' ? 'es-ES' : 'en-US',
         t: (key, vars) => translate(lang, key, vars),
       };
-      const mine = shows.filter((s) => wants(s, p, prefs));
+      const mine = shows.filter((s) => wants(s, settings, prefs));
       const pending: { key: string; payload: PushPayload; ttl: number }[] = [];
 
       // Recordatorios
@@ -177,7 +162,7 @@ export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events
       // Anuncios (solo PPV/PLE)
       if (prefs.announce && prefs.kinds !== 'weekly') {
         for (const s of newEvents) {
-          if (p.favorites.includes(s.promotion)) {
+          if ((settings.favorites as string[]).includes(s.promotion)) {
             pending.push({ key: `a:${eventKey(s)}`, payload: announcement(s, ctx), ttl: 24 * 3600 });
           }
         }
@@ -200,24 +185,22 @@ export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events
         }
       }
 
-      if (pending.length === 0) return;
-      const userSubs = subs.filter((s) => s.user_id === p.user_id);
-
       for (const item of pending) {
         // Se apunta antes de enviar: si dos ejecuciones coinciden, solo una lo envía
         const claimed = (await sql.query(
-          'insert into notification_log (user_id, key) values ($1, $2) on conflict do nothing returning key',
-          [p.user_id, item.key],
+          'insert into device_notifications (device_id, key) values ($1, $2) on conflict do nothing returning key',
+          [device.id, item.key],
         )) as unknown[];
         if (claimed.length === 0) continue;
-        const { sent } = await sendToSubscriptions(userSubs, item.payload, item.ttl);
+        const { sent, removed } = await sendToSubscriptions([device], item.payload, item.ttl);
         if (sent > 0) notifications++;
+        if (removed > 0) break; // el dispositivo ya no existe
       }
     }),
   );
 
   // Limpieza del registro de avisos
-  await sql.query(`delete from notification_log where sent_at < now() - interval '30 days'`);
+  await sql.query(`delete from device_notifications where sent_at < now() - interval '30 days'`);
 
-  return { users: profiles.length, notifications, newEvents: newEvents.length };
+  return { devices: devices.length, notifications, newEvents: newEvents.length };
 }

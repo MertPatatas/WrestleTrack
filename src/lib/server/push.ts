@@ -1,6 +1,13 @@
 import 'server-only';
 import webpush, { WebPushError } from 'web-push';
-import { db, type SubscriptionRow } from './db';
+import { db } from './db';
+
+/** Datos mínimos para enviar a un dispositivo. */
+export interface PushTarget {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
 
 // Envío de notificaciones Web Push (estándar del navegador, sin servicios de terceros).
 // Claves VAPID: NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY y VAPID_SUBJECT (mailto: o https:).
@@ -30,11 +37,11 @@ function configure() {
 }
 
 /**
- * Envía una notificación a todos los dispositivos de un usuario.
- * Borra las suscripciones que el navegador ya no acepta (desinstalada, permiso retirado...).
+ * Envía una notificación a uno o varios dispositivos.
+ * Borra los que el navegador ya no acepta (app desinstalada, permiso retirado...).
  */
 export async function sendToSubscriptions(
-  subs: SubscriptionRow[],
+  subs: PushTarget[],
   payload: PushPayload,
   ttlSeconds = 3600,
 ): Promise<{ sent: number; removed: number }> {
@@ -58,7 +65,7 @@ export async function sendToSubscriptions(
   );
   if (dead.length) {
     const sql = await db();
-    await sql.query('delete from push_subscriptions where endpoint = any($1)', [dead]);
+    await sql.query('delete from devices where endpoint = any($1)', [dead]);
   }
   return { sent, removed: dead.length };
 }
