@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { PageHeader } from '../components/PageHeader';
 import { NewsCard } from '../components/NewsCard';
+import { NewsSkeleton } from '../components/NewsSkeleton';
+import { PageHeader } from '../components/PageHeader';
 import { SampleNotice } from '../components/SampleNotice';
 import { ShowRow } from '../components/ShowRow';
 import { StorylineCard } from '../components/StorylineCard';
 import { useAppData } from '../data/useAppData';
+import { useNews } from '../data/useNews';
 
 function SectionHead({ title, href }: { title: string; href: string }) {
   return (
@@ -21,6 +23,7 @@ function SectionHead({ title, href }: { title: string; href: string }) {
 
 export function HomeView() {
   const data = useAppData();
+  const news = useNews();
   const now = Date.now();
   const upcoming = data
     ? data.shows.filter((s) => new Date(s.startsAt).getTime() > now).slice(0, 3)
@@ -29,7 +32,7 @@ export function HomeView() {
   return (
     <>
       <PageHeader title="Inicio" />
-      <SampleNotice />
+      <SampleNotice text="Los shows y las storylines son datos de ejemplo; las noticias son reales." />
 
       {/* En escritorio los próximos shows viven en la columna lateral */}
       <section className="hide-desktop">
@@ -43,9 +46,17 @@ export function HomeView() {
 
       <section>
         <SectionHead title="Últimas noticias" href="/noticias" />
-        <div className="stack">
-          {data?.news.slice(0, 2).map((n) => <NewsCard key={n.id} item={n} now={now} />)}
-        </div>
+        {news.data ? (
+          <div className="stack">
+            {news.data.items.slice(0, 3).map((n) => (
+              <NewsCard key={n.id} item={n} now={now} />
+            ))}
+          </div>
+        ) : news.status === 'error' ? (
+          <p className="empty">No se pudieron cargar las noticias.</p>
+        ) : (
+          <NewsSkeleton count={2} />
+        )}
       </section>
 
       <section>

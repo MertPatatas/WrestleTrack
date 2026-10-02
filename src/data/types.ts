@@ -14,6 +14,8 @@ export interface NewsItem {
   source: string;
   url: string;
   publishedAt: string; // ISO 8601
+  image?: string; // miniatura que ofrece la propia fuente
+  lang?: 'en' | 'es';
 }
 
 export type StorylineStatus = 'en_curso' | 'cerrada';

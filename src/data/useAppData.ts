@@ -2,14 +2,13 @@
 
 import { useMemo } from 'react';
 import { useMounted } from '../lib/useMounted';
-import { getNews, getShows, getStorylines } from './mock';
+import { getShows, getStorylines } from './mock';
 
-// Único punto de acceso a los datos. Cuando haya backend, se sustituye aquí
-// por llamadas reales (por ejemplo a /api/news) sin tocar las pantallas.
+// Shows y storylines (datos de ejemplo por ahora). Las noticias reales viven en useNews.
 export function useAppData() {
   const mounted = useMounted();
   return useMemo(
-    () => (mounted ? { news: getNews(), storylines: getStorylines(), shows: getShows() } : null),
+    () => (mounted ? { storylines: getStorylines(), shows: getShows() } : null),
     [mounted],
   );
 }

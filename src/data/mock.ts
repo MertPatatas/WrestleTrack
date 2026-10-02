@@ -1,4 +1,4 @@
-import type { NewsItem, Promotion, Show, Storyline } from './types';
+import type { Promotion, Show, Storyline } from './types';
 
 // DATOS DE EJEMPLO: se sustituirán por datos reales (API / Supabase).
 
@@ -12,56 +12,6 @@ export const promotions: Promotion[] = [
 ];
 
 const hoursAgo = (now: number, h: number) => new Date(now - h * 3600_000).toISOString();
-
-export function getNews(now: number = Date.now()): NewsItem[] {
-  return [
-    {
-      id: 'n1',
-      promotion: 'wwe',
-      title: 'Noticia de ejemplo de WWE',
-      excerpt: 'Aquí irá un extracto breve con enlace a la fuente original.',
-      source: 'Fuente de ejemplo',
-      url: 'https://example.com',
-      publishedAt: hoursAgo(now, 2),
-    },
-    {
-      id: 'n2',
-      promotion: 'aew',
-      title: 'Noticia de ejemplo de AEW',
-      excerpt: 'Las noticias reales llegarán por RSS y se etiquetarán por promoción.',
-      source: 'Fuente de ejemplo',
-      url: 'https://example.com',
-      publishedAt: hoursAgo(now, 4),
-    },
-    {
-      id: 'n3',
-      promotion: 'cmll',
-      title: 'Noticia de ejemplo de CMLL',
-      excerpt: 'Cobertura de lucha libre mexicana.',
-      source: 'Fuente de ejemplo',
-      url: 'https://example.com',
-      publishedAt: hoursAgo(now, 7),
-    },
-    {
-      id: 'n4',
-      promotion: 'njpw',
-      title: 'Noticia de ejemplo de NJPW',
-      excerpt: 'Cobertura de puroresu.',
-      source: 'Fuente de ejemplo',
-      url: 'https://example.com',
-      publishedAt: hoursAgo(now, 20),
-    },
-    {
-      id: 'n5',
-      promotion: 'other',
-      title: 'Noticia de ejemplo del mundo del wrestling',
-      excerpt: 'Noticias generales de la industria, más allá de las cinco promociones.',
-      source: 'Fuente de ejemplo',
-      url: 'https://example.com',
-      publishedAt: hoursAgo(now, 30),
-    },
-  ];
-}
 
 export function getStorylines(now: number = Date.now()): Storyline[] {
   return [
