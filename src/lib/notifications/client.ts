@@ -152,13 +152,16 @@ export async function syncDevice(settings: DeviceSettings): Promise<void> {
   }
 }
 
-export async function sendTestPush(): Promise<boolean> {
+/** Manda una notificación de prueba; si falla, devuelve el motivo que da el servidor. */
+export async function sendTestPush(): Promise<{ ok: boolean; error?: string }> {
   const stored = read<StoredDevice>(DEVICE_KEY);
-  if (!stored) return false;
+  if (!stored) return { ok: false, error: 'not-registered' };
   const res = await fetch('/api/push/test', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(stored),
   }).catch(() => null);
-  return Boolean(res?.ok);
+  if (res?.ok) return { ok: true };
+  const body = (await res?.json().catch(() => null)) as { error?: string } | null;
+  return { ok: false, error: body?.error ?? (res ? `HTTP ${res.status}` : 'sin conexión') };
 }

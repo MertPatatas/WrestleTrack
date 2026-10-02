@@ -555,6 +555,13 @@ button {
 .text-error {
   color: #e07b6a;
 }
+.error-detail {
+  display: block;
+  margin-top: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  word-break: break-word;
+}
 .notif-on {
   color: var(--success);
   font-weight: 700;

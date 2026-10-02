@@ -24,7 +24,7 @@ export function NotificationsCard() {
   const { t, notifications: prefs, updateNotifications, locale, deviceSettings } = useSettings();
   const [support, setSupport] = useState<PushSupport | null>(null);
   const [device, setDevice] = useState<DeviceState>('checking');
-  const [message, setMessage] = useState<{ key: MessageKey; error?: boolean } | null>(null);
+  const [message, setMessage] = useState<{ key: MessageKey; error?: boolean; detail?: string } | null>(null);
 
   // Estado del permiso y la suscripción de este dispositivo (solo existe en el navegador)
   useEffect(() => {
@@ -55,8 +55,14 @@ export function NotificationsCard() {
   };
 
   const test = async () => {
-    const ok = await sendTestPush();
-    setMessage(ok ? { key: 'notif.testSent' } : { key: 'notif.testFailed', error: true });
+    setMessage(null);
+    const result = await sendTestPush();
+    if (result.ok) setMessage({ key: 'notif.testSent' });
+    else if (result.error === 'Dispositivo no registrado' || result.error === 'not-registered') {
+      // El servidor no lo conoce: se vuelve a activar
+      setDevice('off');
+      setMessage({ key: 'notif.testFailed', error: true });
+    } else setMessage({ key: 'notif.testFailed', error: true, detail: result.error });
   };
 
   const toggleLead = (lead: number) => {
@@ -103,6 +109,7 @@ export function NotificationsCard() {
         {message ? (
           <p className={`small setting-help${message.error ? ' text-error' : ' muted'}`} role="status">
             {t(message.key)}
+            {message.detail ? <span className="error-detail">{message.detail}</span> : null}
           </p>
         ) : null}
 

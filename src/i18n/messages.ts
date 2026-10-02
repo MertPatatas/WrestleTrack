@@ -98,7 +98,8 @@ const es = {
   'notif.enabled': 'Activadas en este dispositivo.',
   'notif.disable': 'Desactivar',
   'notif.test': 'Enviar prueba',
-  'notif.testSent': 'Notificación de prueba enviada.',
+  'notif.testSent':
+    'Notificación de prueba enviada. Si no aparece en unos segundos, revisa que tu sistema permita las notificaciones de este navegador o app (modo No molestar, ahorro de batería, ajustes de notificaciones).',
   'notif.testFailed': 'No se pudo enviar la prueba.',
   'notif.denied': 'Has bloqueado las notificaciones de esta web. Permítelas en los ajustes del navegador y vuelve a intentarlo.',
   'notif.unsupported': 'Este navegador no admite notificaciones.',
@@ -249,7 +250,8 @@ const en: Messages = {
   'notif.enabled': 'On for this device.',
   'notif.disable': 'Turn off',
   'notif.test': 'Send test',
-  'notif.testSent': 'Test notification sent.',
+  'notif.testSent':
+    'Test notification sent. If it does not show up within a few seconds, check that your system allows notifications from this browser or app (Do Not Disturb, battery saver, notification settings).',
   'notif.testFailed': 'The test could not be sent.',
   'notif.denied': 'You have blocked notifications for this site. Allow them in your browser settings and try again.',
   'notif.unsupported': 'This browser does not support notifications.',

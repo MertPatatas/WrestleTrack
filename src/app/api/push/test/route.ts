@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
       url: '/perfil',
       tag: 'test',
     });
+    // Si el servicio de push la rechaza, se devuelve el motivo para mostrarlo
+    if (result.sent === 0) return NextResponse.json({ error: result.errors[0] ?? 'No se pudo enviar' }, { status: 502 });
     return NextResponse.json(result);
   } catch (err) {
     return errorResponse(err);

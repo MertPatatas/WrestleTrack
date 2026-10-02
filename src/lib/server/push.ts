@@ -44,10 +44,11 @@ export async function sendToSubscriptions(
   subs: PushTarget[],
   payload: PushPayload,
   ttlSeconds = 3600,
-): Promise<{ sent: number; removed: number }> {
+): Promise<{ sent: number; removed: number; errors: string[] }> {
   configure();
   let sent = 0;
   const dead: string[] = [];
+  const errors: string[] = [];
   await Promise.all(
     subs.map(async (s) => {
       try {
@@ -58,8 +59,16 @@ export async function sendToSubscriptions(
         );
         sent++;
       } catch (err) {
+        // Respuesta del servicio de push (Google, Apple, Mozilla...) para poder diagnosticar
+        const detail =
+          err instanceof WebPushError
+            ? `${new URL(s.endpoint).host} HTTP ${err.statusCode}: ${String(err.body || err.message).slice(0, 200)}`
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        errors.push(detail);
         if (err instanceof WebPushError && (err.statusCode === 404 || err.statusCode === 410)) dead.push(s.endpoint);
-        else console.warn('[push] fallo al enviar:', err instanceof Error ? err.message : err);
+        else console.warn('[push] fallo al enviar:', detail);
       }
     }),
   );
@@ -67,5 +76,5 @@ export async function sendToSubscriptions(
     const sql = await db();
     await sql.query('delete from devices where endpoint = any($1)', [dead]);
   }
-  return { sent, removed: dead.length };
+  return { sent, removed: dead.length, errors };
 }
