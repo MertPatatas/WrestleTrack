@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { InstallCard } from '../components/InstallCard';
 import { PageHeader } from '../components/PageHeader';
+import { AccountCard } from '../components/profile/AccountCard';
+import { NotificationsCard } from '../components/profile/NotificationsCard';
 import { promotions } from '../data/mock';
-import type { PromotionId } from '../data/types';
-import { LANGUAGES, LANGUAGE_NAMES, type Lang } from '../i18n/config';
+import { FAVORITE_OPTIONS, LANGUAGES, LANGUAGE_NAMES, type FavoritePromotion, type Lang } from '../i18n/config';
 import { useSettings } from '../i18n/SettingsProvider';
 import { utcOffsetLabel } from '../lib/dates';
 
@@ -41,15 +42,13 @@ const cityName = (tz: string) => tz.split('/').pop()!.replace(/_/g, ' ');
 
 export function ProfileView() {
   const { settings, update, lang, deviceLang, deviceTimeZone, t } = useSettings();
-  // Solo estado local por ahora; se guardará en el navegador o en el backend más adelante.
-  const [favorites, setFavorites] = useState<Record<PromotionId, boolean>>({
-    wwe: true,
-    aew: true,
-    cmll: true,
-    aaa: true,
-    njpw: true,
-    other: true,
-  });
+
+  const toggleFavorite = (id: FavoritePromotion) => {
+    const favorites = settings.favorites.includes(id)
+      ? settings.favorites.filter((f) => f !== id)
+      : FAVORITE_OPTIONS.filter((f) => f === id || settings.favorites.includes(f));
+    update({ favorites });
+  };
 
   // La lista de zonas y sus desfases solo se calculan en el navegador (tras conocer la del dispositivo)
   const zones = useMemo(() => {
@@ -71,26 +70,29 @@ export function ProfileView() {
     <>
       <PageHeader title={t('profile.title')} />
 
+      <AccountCard />
+
       <section>
         <h2 className="section-title section-title--solo">{t('profile.following')}</h2>
         <div className="card card--list">
-          {promotions
-            .filter((p) => p.id !== 'other')
-            .map((p) => (
-              <div key={p.id} className="row">
-                <span id={`fav-${p.id}`}>{p.name}</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={favorites[p.id]}
-                  aria-labelledby={`fav-${p.id}`}
-                  className="switch"
-                  onClick={() => setFavorites((f) => ({ ...f, [p.id]: !f[p.id] }))}
-                />
-              </div>
-            ))}
+          {FAVORITE_OPTIONS.map((id) => (
+            <div key={id} className="row">
+              <span id={`fav-${id}`}>{promotions.find((p) => p.id === id)?.name ?? id}</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={settings.favorites.includes(id)}
+                aria-labelledby={`fav-${id}`}
+                className="switch"
+                onClick={() => toggleFavorite(id)}
+              />
+            </div>
+          ))}
         </div>
+        <p className="muted small setting-help">{t('profile.followingHelp')}</p>
       </section>
+
+      <NotificationsCard />
 
       <section>
         <h2 className="section-title section-title--solo">

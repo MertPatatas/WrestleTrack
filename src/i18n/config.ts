@@ -50,12 +50,21 @@ export function localeFor(lang: Lang, deviceLocale: string): string {
 
 // ---------- Ajustes del usuario (cookie, para que el servidor también los conozca) ----------
 
+export const FAVORITE_OPTIONS = ['wwe', 'aew', 'cmll', 'aaa', 'njpw'] as const;
+export type FavoritePromotion = (typeof FAVORITE_OPTIONS)[number];
+
 export interface UserSettings {
   timeZone: 'auto' | string; // 'auto' = la del dispositivo; si no, una zona IANA ("Europe/Madrid")
   language: 'auto' | Lang; // 'auto' = el del dispositivo
+  favorites: FavoritePromotion[]; // promociones que sigue (se usan para las notificaciones)
 }
 
-export const DEFAULT_SETTINGS: UserSettings = { timeZone: 'auto', language: 'auto' };
+export const DEFAULT_SETTINGS: UserSettings = { timeZone: 'auto', language: 'auto', favorites: [...FAVORITE_OPTIONS] };
+
+export function sanitizeFavorites(value: unknown): FavoritePromotion[] {
+  if (!Array.isArray(value)) return [...FAVORITE_OPTIONS];
+  return FAVORITE_OPTIONS.filter((p) => value.includes(p));
+}
 export const SETTINGS_COOKIE = 'wt-settings';
 
 export function isValidTimeZone(tz: string): boolean {
@@ -67,21 +76,27 @@ export function isValidTimeZone(tz: string): boolean {
   }
 }
 
+/** Valida unos ajustes de origen desconocido (cookie, base de datos, petición). */
+export function sanitizeSettings(value: Partial<UserSettings> | null | undefined): UserSettings {
+  const v = value ?? {};
+  return {
+    timeZone:
+      typeof v.timeZone === 'string' && (v.timeZone === 'auto' || isValidTimeZone(v.timeZone)) ? v.timeZone : 'auto',
+    language: v.language === 'auto' || isLang(v.language) ? v.language : 'auto',
+    favorites: sanitizeFavorites(v.favorites),
+  };
+}
+
 export function parseSettings(raw: string | null | undefined): UserSettings {
   if (!raw) return DEFAULT_SETTINGS;
   try {
-    const value = JSON.parse(decodeURIComponent(raw)) as Partial<UserSettings>;
-    return {
-      timeZone:
-        typeof value.timeZone === 'string' && (value.timeZone === 'auto' || isValidTimeZone(value.timeZone))
-          ? value.timeZone
-          : 'auto',
-      language: value.language === 'auto' || isLang(value.language) ? value.language : 'auto',
-    };
+    return sanitizeSettings(JSON.parse(decodeURIComponent(raw)) as Partial<UserSettings>);
   } catch {
     return DEFAULT_SETTINGS;
   }
 }
+
+export { isLang };
 
 export function serializeSettings(settings: UserSettings): string {
   return encodeURIComponent(JSON.stringify(settings));

@@ -8,7 +8,8 @@
 - [x] 4b. Calendario automático (`/api/schedule`, se refresca cada 6 h): TVmaze (semanales con cambios y PLE/PPV de WWE, NXT y AEW), API oficial de NJPW (eventos grandes con hora) y Wikipedia (resto, solo fecha)
 - [ ] 4c. Fuente automática para CMLL (ahora usa su horario semanal fijo) y hora de los PLE de AAA
 - [ ] 5. Storylines: modelo de datos + resúmenes generados con IA (primero WWE y AEW)
-- [ ] 6. Notificaciones web push (en iPhone requieren la app instalada en la pantalla de inicio)
+- [x] 6. Cuentas (Clerk, código por email) con favoritos y ajustes sincronizados (Neon) y notificaciones web push configurables: tipos de evento, recordatorios, anuncios de PPV/PLE nuevos y resumen diario/semanal (Upstash QStash llama a `/api/push/dispatch` cada 5 min). En iPhone requieren la app instalada en la pantalla de inicio
+- [ ] 6b. Dominio propio: necesario para pasar Clerk a modo producción (en `*.vercel.app` funciona en modo desarrollo)
 - [ ] 7. Si se quisiera publicar en las tiendas: envolver la web (TWA en Google Play; Apple es más estricto con apps que son solo una web)
 
 ## Notas

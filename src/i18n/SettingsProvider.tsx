@@ -1,15 +1,14 @@
 'use client';
 
+import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import {
-  SETTINGS_COOKIE,
-  localeFor,
-  serializeSettings,
-  type Lang,
-  type UserSettings,
-} from './config';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { NotificationPrefs } from '../lib/notifications/prefs';
+import type { ProfileDTO } from '../lib/server/profile';
+import { SETTINGS_COOKIE, localeFor, serializeSettings, type Lang, type UserSettings } from './config';
 import { translate, type MessageKey } from './messages';
+
+export type SyncState = 'local' | 'loading' | 'synced' | 'error';
 
 interface SettingsContextValue {
   settings: UserSettings;
@@ -24,11 +23,30 @@ interface SettingsContextValue {
   /** Zona horaria del dispositivo; null hasta montar. */
   deviceTimeZone: string | null;
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
+  /** Sincronización con la cuenta: 'local' sin sesión. */
+  sync: SyncState;
+  /** Preferencias de notificaciones (solo con sesión iniciada). */
+  notifications: NotificationPrefs | null;
+  updateNotifications: (patch: Partial<NotificationPrefs>) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 const ONE_YEAR = 365 * 24 * 3600;
+
+function writeCookie(settings: UserSettings) {
+  document.cookie = `${SETTINGS_COOKIE}=${serializeSettings(settings)}; Path=/; Max-Age=${ONE_YEAR}; SameSite=Lax`;
+}
+
+async function putProfile(body: object): Promise<ProfileDTO | null> {
+  const res = await fetch('/api/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return ((await res.json()) as { profile: ProfileDTO | null }).profile;
+}
 
 export function SettingsProvider({
   initialSettings,
@@ -42,8 +60,12 @@ export function SettingsProvider({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const { isLoaded, isSignedIn, userId } = useAuth();
   const [settings, setSettings] = useState(initialSettings);
   const [deviceTimeZone, setDeviceTimeZone] = useState<string | null>(null);
+  const [sync, setSync] = useState<SyncState>('local');
+  const [notifications, setNotifications] = useState<NotificationPrefs | null>(null);
+  const syncedUser = useRef<string | null>(null);
 
   // La zona del dispositivo solo se conoce en el navegador
   useEffect(() => {
@@ -56,15 +78,86 @@ export function SettingsProvider({
     document.documentElement.lang = lang;
   }, [lang]);
 
+  // Aplica unos ajustes (de la cuenta o del usuario) en este navegador
+  const applyLocal = useCallback(
+    (next: UserSettings, prev: UserSettings) => {
+      writeCookie(next);
+      setSettings(next);
+      // El título de la pestaña y otros textos del servidor dependen del idioma
+      if (next.language !== prev.language) router.refresh();
+    },
+    [router],
+  );
+
+  // Al iniciar sesión: la primera vez se suben los ajustes de este navegador a la cuenta;
+  // las siguientes, se traen los de la cuenta (así todos los dispositivos quedan iguales).
+  useEffect(() => {
+    if (!isLoaded || !deviceTimeZone) return;
+    if (!isSignedIn || !userId) {
+      syncedUser.current = null;
+      setSync('local');
+      setNotifications(null);
+      return;
+    }
+    if (syncedUser.current === userId) return;
+    syncedUser.current = userId;
+
+    let cancelled = false;
+    const device = { timeZone: deviceTimeZone, language: deviceLang, locale: deviceLocale };
+    setSync('loading');
+    (async () => {
+      try {
+        const res = await fetch('/api/profile');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { profile } = (await res.json()) as { profile: ProfileDTO | null };
+        const saved = profile
+          ? await putProfile({ device }) // solo actualiza los datos del dispositivo
+          : await putProfile({ settings, device });
+        if (cancelled || !saved) return;
+        if (profile) applyLocal(saved.settings, settings);
+        setNotifications(saved.notifications);
+        setSync('synced');
+      } catch (err) {
+        console.warn('[perfil] no se pudo sincronizar:', err);
+        if (!cancelled) {
+          syncedUser.current = null; // se reintenta en la próxima carga
+          setSync('error');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // settings se lee solo al iniciar sesión; no debe relanzar la sincronización
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn, userId, deviceTimeZone, deviceLang, deviceLocale, applyLocal]);
+
   const update = useCallback(
     (patch: Partial<UserSettings>) => {
       const next = { ...settings, ...patch };
-      document.cookie = `${SETTINGS_COOKIE}=${serializeSettings(next)}; Path=/; Max-Age=${ONE_YEAR}; SameSite=Lax`;
-      setSettings(next);
-      // El título de la pestaña y otros textos del servidor dependen del idioma
-      if (next.language !== settings.language) router.refresh();
+      applyLocal(next, settings);
+      if (sync === 'synced') {
+        putProfile({ settings: patch }).catch((err) => {
+          console.warn('[perfil] no se pudo guardar:', err);
+          setSync('error');
+        });
+      }
     },
-    [settings, router],
+    [settings, applyLocal, sync],
+  );
+
+  const updateNotifications = useCallback(
+    (patch: Partial<NotificationPrefs>) => {
+      if (!notifications) return;
+      setNotifications({ ...notifications, ...patch });
+      putProfile({ notifications: patch })
+        .then((saved) => saved && setNotifications(saved.notifications))
+        .catch((err) => {
+          console.warn('[perfil] no se pudo guardar:', err);
+          setSync('error');
+        });
+    },
+    [notifications],
   );
 
   const value = useMemo<SettingsContextValue>(
@@ -77,8 +170,11 @@ export function SettingsProvider({
       timeZone: settings.timeZone === 'auto' ? deviceTimeZone : settings.timeZone,
       deviceTimeZone,
       t: (key, vars) => translate(lang, key, vars),
+      sync,
+      notifications,
+      updateNotifications,
     }),
-    [settings, update, lang, deviceLang, deviceLocale, deviceTimeZone],
+    [settings, update, lang, deviceLang, deviceLocale, deviceTimeZone, sync, notifications, updateNotifications],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

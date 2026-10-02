@@ -523,6 +523,64 @@ button {
   font-weight: 800;
   cursor: pointer;
 }
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.button--ghost {
+  background: transparent;
+  color: var(--ivory);
+  border: 1px solid var(--line);
+}
+.button--ghost:hover {
+  border-color: var(--gold);
+}
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.switch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Cuenta y notificaciones ---------- */
+
+.text-error {
+  color: #e07b6a;
+}
+.notif-on {
+  color: var(--success);
+  font-weight: 700;
+}
+.notif-prefs {
+  margin-top: 16px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+.field-label {
+  display: block;
+  margin: 16px 0 8px;
+  color: var(--ivory);
+  font-weight: 700;
+}
+.chips--wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+  padding-bottom: 6px;
+}
+.row--field {
+  gap: 16px;
+  margin-top: 12px;
+}
+.field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
 
 /* ---------- Escritorio ---------- */
 
