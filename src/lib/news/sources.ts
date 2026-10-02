@@ -12,7 +12,7 @@ export interface FeedSource {
 // Direcciones habituales de cada sitio. Si alguna cambia o falla, la API lo indica
 // en /api/news (campo "sources") y el resto de fuentes sigue funcionando.
 export const feedSources: FeedSource[] = [
-  { id: 'cageside', name: 'Cageside Seats', url: 'https://www.cagesideseats.com/rss/current', lang: 'en' },
+  { id: 'cageside', name: 'Cageside Seats', url: 'https://www.cagesideseats.com/rss/current.xml', lang: 'en' },
   { id: 'wrestlinginc', name: 'Wrestling Inc', url: 'https://www.wrestlinginc.com/feed/', lang: 'en' },
   { id: 'ringside', name: 'Ringside News', url: 'https://www.ringsidenews.com/feed/', lang: 'en' },
   { id: 'wrestlingnews', name: 'Wrestling News', url: 'https://wrestlingnews.co/feed', lang: 'en' },
@@ -23,4 +23,5 @@ export const feedSources: FeedSource[] = [
   { id: 'superluchas-cmll', name: 'Superluchas', url: 'https://superluchas.com/lucha-libre/cmll/feed/', lang: 'es', promotion: 'cmll' },
   { id: 'superluchas-aaa', name: 'Superluchas', url: 'https://superluchas.com/lucha-libre/aaa/feed/', lang: 'es', promotion: 'aaa' },
   { id: 'superluchas-njpw', name: 'Superluchas', url: 'https://superluchas.com/njpw/feed/', lang: 'es', promotion: 'njpw' },
+  { id: 'solowrestling', name: 'Solowrestling', url: 'https://solowrestling.com/rss/SWRSS.xml', lang: 'es' },
 ];
