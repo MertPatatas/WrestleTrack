@@ -2,6 +2,7 @@
 
 import { promotions } from '../data/mock';
 import type { PromotionId } from '../data/types';
+import { useT } from '../i18n/SettingsProvider';
 
 export type Filter = PromotionId | 'all';
 
@@ -14,14 +15,15 @@ export function FilterChips({
   onChange: (next: Filter) => void;
   includeGeneral?: boolean;
 }) {
+  const t = useT();
   const options: { id: Filter; label: string }[] = [
-    { id: 'all', label: 'Todas' },
+    { id: 'all', label: t('filter.all') },
     ...promotions
       .filter((p) => includeGeneral || p.id !== 'other')
-      .map((p) => ({ id: p.id as Filter, label: p.name })),
+      .map((p) => ({ id: p.id as Filter, label: p.id === 'other' ? t('promo.general') : p.name })),
   ];
   return (
-    <div className="chips" role="group" aria-label="Filtrar por promoción">
+    <div className="chips" role="group" aria-label={t('filter.aria')}>
       {options.map((o) => (
         <button
           key={o.id}

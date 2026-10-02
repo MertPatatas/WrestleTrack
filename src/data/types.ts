@@ -42,7 +42,16 @@ export interface Show {
   id: string;
   promotion: PromotionId;
   name: string;
+  night?: number; // en eventos de varias noches, cuál es (1, 2...)
   kind: ShowKind;
   startsAt: string; // ISO 8601 (UTC)
-  venue?: string;
+  endsAt: string; // ISO 8601 (UTC), estimado a partir de la duración habitual
+  eventDate: string; // 'YYYY-MM-DD' en la zona horaria del evento (la fecha que anuncia la promoción)
+  timeTbd?: boolean; // fecha confirmada pero hora aún sin anunciar
+  timeApprox?: boolean; // hora habitual de la promoción, aún no confirmada para este evento
+  url?: string; // página con más información
+  auto?: boolean; // detectado automáticamente (Wikipedia)
+  venue?: string; // recinto y/o ciudad
+  broadcast?: string; // cadena o plataforma
+  note?: string;
 }

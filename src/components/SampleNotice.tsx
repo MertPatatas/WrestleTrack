@@ -1,8 +1,9 @@
+'use client';
+
+import { useT } from '../i18n/SettingsProvider';
+
 // Quitar cuando los datos sean reales.
-export function SampleNotice({
-  text = 'Datos de ejemplo. Los reales llegarán con el backend.',
-}: {
-  text?: string;
-}) {
-  return <p className="muted small notice">{text}</p>;
+export function SampleNotice({ text }: { text?: string }) {
+  const t = useT();
+  return <p className="muted small notice">{text ?? t('sample.default')}</p>;
 }

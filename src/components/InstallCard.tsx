@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useT } from '../i18n/SettingsProvider';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -10,6 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 type Mode = 'checking' | 'installed' | 'prompt' | 'ios' | 'manual';
 
 export function InstallCard() {
+  const t = useT();
   const [mode, setMode] = useState<Mode>('checking');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
 
@@ -51,31 +53,25 @@ export function InstallCard() {
 
   return (
     <section>
-      <h2 className="section-title section-title--solo">Instalar como aplicación</h2>
+      <h2 className="section-title section-title--solo">{t('install.title')}</h2>
       <div className="card">
-        {mode === 'installed' && <p className="card-text">Ya estás usando WrestleTrack como aplicación.</p>}
+        {mode === 'installed' && <p className="card-text">{t('install.installed')}</p>}
 
         {mode === 'prompt' && (
           <>
-            <p className="card-text">Instálala para abrirla desde tu escritorio o pantalla de inicio, en su propia ventana.</p>
+            <p className="card-text">{t('install.prompt')}</p>
             <button type="button" className="button" onClick={install}>
-              Instalar WrestleTrack
+              {t('install.button')}
             </button>
           </>
         )}
 
         {mode === 'ios' && (
-          <p className="card-text">
-            En Safari pulsa el botón Compartir y elige «Añadir a pantalla de inicio».
-          </p>
+          <p className="card-text">{t('install.ios')}</p>
         )}
 
         {mode === 'manual' && (
-          <p className="card-text">
-            En Chrome o Edge busca el icono de instalar en la barra de direcciones, o abre el menú del
-            navegador y elige «Instalar WrestleTrack». La instalación solo está disponible en la versión
-            publicada con HTTPS.
-          </p>
+          <p className="card-text">{t('install.manual')}</p>
         )}
       </div>
     </section>

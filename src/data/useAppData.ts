@@ -1,14 +1,53 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ScheduleResponse } from '../app/api/schedule/route';
+import { buildSchedule } from '../lib/schedule/build';
 import { useMounted } from '../lib/useMounted';
-import { getShows, getStorylines } from './mock';
+import { getStorylines } from './mock';
 
-// Shows y storylines (datos de ejemplo por ahora). Las noticias reales viven en useNews.
+type AutoData = Pick<ScheduleResponse, 'episodes' | 'events'>;
+
+// Datos automáticos del calendario, compartidos entre pantallas para no repetir la petición
+let autoCache: AutoData | null = null;
+let autoRequest: Promise<AutoData | null> | null = null;
+
+function loadAutoData(): Promise<AutoData | null> {
+  autoRequest ??= fetch('/api/schedule')
+    .then((res) => (res.ok ? (res.json() as Promise<ScheduleResponse>) : null))
+    .then((data) => (autoCache = data ? { episodes: data.episodes, events: data.events } : null))
+    .catch(() => {
+      autoRequest = null; // se reintenta en la próxima visita
+      return null;
+    });
+  return autoRequest;
+}
+
+// Calendario (fuentes automáticas de /api/schedule + reglas de src/data/schedule.ts)
+// y storylines (aún de ejemplo). Las noticias reales viven en useNews.
 export function useAppData() {
   const mounted = useMounted();
+  const [auto, setAuto] = useState<AutoData | null>(autoCache);
+
+  useEffect(() => {
+    if (autoCache) return;
+    let alive = true;
+    void loadAutoData().then((data) => alive && data && setAuto(data));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Mientras llegan los datos automáticos (o si fallan) se muestran los shows semanales habituales
   return useMemo(
-    () => (mounted ? { storylines: getStorylines(), shows: getShows() } : null),
-    [mounted],
+    () =>
+      mounted
+        ? {
+            storylines: getStorylines(),
+            shows: buildSchedule(Date.now(), { episodes: auto?.episodes, autoEvents: auto?.events }),
+            scheduleLive: auto !== null,
+          }
+        : null,
+    [mounted, auto],
   );
 }

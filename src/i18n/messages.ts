@@ -1,0 +1,206 @@
+// Textos de la interfaz. Para añadir un idioma: copia `en`, tradúcelo y añádelo a `messages`
+// y a LANGUAGES (src/i18n/config.ts). Las variables van entre llaves: {n}, {show}...
+
+const es = {
+  'meta.description': 'Noticias, storylines y calendario de shows de lucha libre.',
+
+  'nav.main': 'Navegación principal',
+  'nav.home': 'Inicio',
+  'nav.news': 'Noticias',
+  'nav.storylines': 'Storylines',
+  'nav.shows': 'Shows',
+  'nav.profile': 'Perfil',
+  'brand.home': 'WrestleTrack, inicio',
+
+  'common.seeAll': 'Ver todo',
+  'common.retry': 'Reintentar',
+  'common.showMore': 'Mostrar más',
+  'common.change': 'Cambiar',
+
+  'filter.aria': 'Filtrar por promoción',
+  'filter.all': 'Todas',
+  'promo.general': 'General',
+
+  'time.agoMin': 'Hace {n} min',
+  'time.agoH': 'Hace {n} h',
+  'time.agoD': 'Hace {n} d',
+  'time.inMin': 'En {n} min',
+  'time.inH': 'En {n} h',
+  'time.inDay': 'En 1 día',
+  'time.inDays': 'En {n} días',
+  'time.live': 'En directo',
+  'time.today': 'Hoy',
+  'time.tomorrow': 'Mañana',
+  'time.yesterday': 'Ayer',
+
+  'home.title': 'Inicio',
+  'home.upcoming': 'Próximos shows',
+  'home.latestNews': 'Últimas noticias',
+  'home.storylines': 'Storylines en curso',
+  'home.sample': 'Las storylines son datos de ejemplo; las noticias y el calendario son reales.',
+  'home.newsError': 'No se pudieron cargar las noticias.',
+
+  'news.title': 'Noticias',
+  'news.langAria': 'Idioma de las noticias',
+  'news.lang.es': 'En español',
+  'news.lang.en': 'En inglés',
+  'news.allLangs': 'Todos los idiomas',
+  'news.loading': 'Cargando noticias…',
+  'news.error': 'No se pudieron cargar las noticias. Comprueba tu conexión e inténtalo de nuevo.',
+  'news.stale': 'No se pudo actualizar; se muestran las últimas noticias cargadas.',
+  'news.empty': 'No hay noticias ahora mismo.',
+  'news.emptyPromo': 'No hay noticias de esta promoción por ahora.',
+  'news.tryAllLangs': 'Prueba con «Todos los idiomas».',
+  'news.sources': 'Fuentes: {sources}. Actualizado a las {time}. Cada noticia enlaza a la web original.',
+  'news.noSources': 'ninguna disponible',
+
+  'shows.title': 'Calendario de shows',
+  'shows.tabsAria': 'Tipo de lista',
+  'shows.upcoming': 'Próximos',
+  'shows.past': 'Pasados',
+  'shows.timesIn': 'Horas en {tz}.',
+  'shows.specialLegend': '= evento especial.',
+  'shows.special': 'Evento especial',
+  'shows.empty': 'No hay shows en esta lista.',
+  'shows.tbd': 'Por confirmar',
+  'shows.tbdLong': 'Hora por confirmar',
+  'shows.approx': 'aprox.',
+  'shows.night': 'Noche {n}',
+  'shows.footerLive': 'Calendario actualizado automáticamente con TVmaze, la web oficial de NJPW y Wikipedia.',
+  'shows.footerOffline': 'No se pudo conectar con las fuentes: se muestran los shows semanales con su horario habitual.',
+  'shows.footerLegend': '«Por confirmar»: fecha anunciada, hora aún no publicada. «aprox.»: hora habitual de la promoción.',
+
+  'storylines.title': 'Storylines',
+  'storylines.empty': 'Todavía no seguimos storylines de esta promoción.',
+  'storylines.ongoing': 'En curso',
+  'storylines.closed': 'Cerrada',
+  'storylines.advanced': 'Avanzó en {show}',
+  'storylines.noAdvance': 'Sin avance en {show}',
+  'sample.default': 'Datos de ejemplo. Los reales llegarán con el backend.',
+
+  'profile.title': 'Perfil',
+  'profile.following': 'Promociones que sigo',
+  'profile.timeZone': 'Zona horaria',
+  'profile.timeZoneHelp': 'Las horas de los shows se muestran en esta zona horaria.',
+  'profile.tzAuto': 'Automática: {tz}',
+  'profile.tzCommon': 'Habituales',
+  'profile.tzAll': 'Todas las zonas',
+  'profile.language': 'Idioma',
+  'profile.languageHelp': 'En automático se usa el idioma de tu dispositivo.',
+  'profile.langAuto': 'Automático: {lang}',
+
+  'install.title': 'Instalar como aplicación',
+  'install.installed': 'Ya estás usando WrestleTrack como aplicación.',
+  'install.prompt': 'Instálala para abrirla desde tu escritorio o pantalla de inicio, en su propia ventana.',
+  'install.button': 'Instalar WrestleTrack',
+  'install.ios': 'En Safari pulsa el botón Compartir y elige «Añadir a pantalla de inicio».',
+  'install.manual':
+    'En Chrome o Edge busca el icono de instalar en la barra de direcciones, o abre el menú del navegador y elige «Instalar WrestleTrack». La instalación solo está disponible en la versión publicada con HTTPS.',
+};
+
+export type MessageKey = keyof typeof es;
+export type Messages = Record<MessageKey, string>;
+
+const en: Messages = {
+  'meta.description': 'Pro wrestling news, storylines and show calendar.',
+
+  'nav.main': 'Main navigation',
+  'nav.home': 'Home',
+  'nav.news': 'News',
+  'nav.storylines': 'Storylines',
+  'nav.shows': 'Shows',
+  'nav.profile': 'Profile',
+  'brand.home': 'WrestleTrack, home',
+
+  'common.seeAll': 'See all',
+  'common.retry': 'Retry',
+  'common.showMore': 'Show more',
+  'common.change': 'Change',
+
+  'filter.aria': 'Filter by promotion',
+  'filter.all': 'All',
+  'promo.general': 'General',
+
+  'time.agoMin': '{n} min ago',
+  'time.agoH': '{n} h ago',
+  'time.agoD': '{n} d ago',
+  'time.inMin': 'In {n} min',
+  'time.inH': 'In {n} h',
+  'time.inDay': 'In 1 day',
+  'time.inDays': 'In {n} days',
+  'time.live': 'Live',
+  'time.today': 'Today',
+  'time.tomorrow': 'Tomorrow',
+  'time.yesterday': 'Yesterday',
+
+  'home.title': 'Home',
+  'home.upcoming': 'Upcoming shows',
+  'home.latestNews': 'Latest news',
+  'home.storylines': 'Ongoing storylines',
+  'home.sample': 'Storylines are sample data; news and the calendar are real.',
+  'home.newsError': 'News could not be loaded.',
+
+  'news.title': 'News',
+  'news.langAria': 'News language',
+  'news.lang.es': 'In Spanish',
+  'news.lang.en': 'In English',
+  'news.allLangs': 'All languages',
+  'news.loading': 'Loading news…',
+  'news.error': 'News could not be loaded. Check your connection and try again.',
+  'news.stale': 'Could not refresh; showing the last news loaded.',
+  'news.empty': 'No news right now.',
+  'news.emptyPromo': 'No news for this promotion yet.',
+  'news.tryAllLangs': 'Try “All languages”.',
+  'news.sources': 'Sources: {sources}. Updated at {time}. Every story links to the original site.',
+  'news.noSources': 'none available',
+
+  'shows.title': 'Show calendar',
+  'shows.tabsAria': 'List type',
+  'shows.upcoming': 'Upcoming',
+  'shows.past': 'Past',
+  'shows.timesIn': 'Times in {tz}.',
+  'shows.specialLegend': '= special event.',
+  'shows.special': 'Special event',
+  'shows.empty': 'No shows in this list.',
+  'shows.tbd': 'TBA',
+  'shows.tbdLong': 'Time TBA',
+  'shows.approx': 'approx.',
+  'shows.night': 'Night {n}',
+  'shows.footerLive': 'Calendar updated automatically from TVmaze, the official NJPW site and Wikipedia.',
+  'shows.footerOffline': 'Could not reach the sources: weekly shows are shown at their usual time.',
+  'shows.footerLegend': '“TBA”: date announced, time not published yet. “approx.”: the promotion’s usual start time.',
+
+  'storylines.title': 'Storylines',
+  'storylines.empty': 'We are not following storylines for this promotion yet.',
+  'storylines.ongoing': 'Ongoing',
+  'storylines.closed': 'Closed',
+  'storylines.advanced': 'Moved forward on {show}',
+  'storylines.noAdvance': 'No progress on {show}',
+  'sample.default': 'Sample data. Real data will arrive with the backend.',
+
+  'profile.title': 'Profile',
+  'profile.following': 'Promotions I follow',
+  'profile.timeZone': 'Time zone',
+  'profile.timeZoneHelp': 'Show times are displayed in this time zone.',
+  'profile.tzAuto': 'Automatic: {tz}',
+  'profile.tzCommon': 'Common',
+  'profile.tzAll': 'All time zones',
+  'profile.language': 'Language',
+  'profile.languageHelp': 'Automatic uses your device language.',
+  'profile.langAuto': 'Automatic: {lang}',
+
+  'install.title': 'Install as an app',
+  'install.installed': 'You are already using WrestleTrack as an app.',
+  'install.prompt': 'Install it to open it from your desktop or home screen, in its own window.',
+  'install.button': 'Install WrestleTrack',
+  'install.ios': 'In Safari, tap the Share button and choose “Add to Home Screen”.',
+  'install.manual':
+    'In Chrome or Edge, look for the install icon in the address bar, or open the browser menu and choose “Install WrestleTrack”. Installing is only available on the published HTTPS version.',
+};
+
+export const messages: Record<'es' | 'en', Messages> = { es, en };
+
+export function translate(lang: 'es' | 'en', key: MessageKey, vars?: Record<string, string | number>): string {
+  const text = messages[lang][key] ?? messages.es[key] ?? key;
+  return vars ? text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`)) : text;
+}

@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import { pageTitle } from '../../i18n/server';
 import { ShowsView } from '../../views/ShowsView';
 
-export const metadata: Metadata = { title: 'Shows' };
+export const generateMetadata = () => pageTitle('nav.shows');
 
 export default function Page() {
   return <ShowsView />;

@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import { pageTitle } from '../../i18n/server';
 import { NewsView } from '../../views/NewsView';
 
-export const metadata: Metadata = { title: 'Noticias' };
+export const generateMetadata = () => pageTitle('news.title');
 
 export default function Page() {
   return <NewsView />;

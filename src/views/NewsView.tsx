@@ -5,34 +5,26 @@ import { FilterChips, type Filter } from '../components/FilterChips';
 import { NewsCard } from '../components/NewsCard';
 import { NewsSkeleton } from '../components/NewsSkeleton';
 import { PageHeader } from '../components/PageHeader';
-import type { NewsItem } from '../data/types';
 import { useNews } from '../data/useNews';
+import { useSettings } from '../i18n/SettingsProvider';
 
 const PAGE = 20;
 
-type Lang = NonNullable<NewsItem['lang']>;
 type LangScope = 'device' | 'all';
 
-const LANG_LABEL: Record<Lang, string> = { es: 'En español', en: 'En inglés' };
 const SCOPE_KEY = 'wrestletrack:news-lang';
-
-// Idioma del dispositivo, solo si hay fuentes en ese idioma (si no, no se muestra el filtro)
-function deviceLang(): Lang | null {
-  const base = (navigator.language || '').slice(0, 2).toLowerCase();
-  return base in LANG_LABEL ? (base as Lang) : null;
-}
 
 export function NewsView() {
   const { data, status, reload } = useNews();
+  // Las noticias se filtran por el idioma de la app (el del dispositivo, o el elegido en el perfil)
+  const { lang, locale, timeZone, t } = useSettings();
   const [filter, setFilter] = useState<Filter>('all');
   const [visible, setVisible] = useState(PAGE);
-  const [lang, setLang] = useState<Lang | null>(null);
   const [scope, setScope] = useState<LangScope>('device');
   const now = Date.now();
 
-  // navigator solo existe en el navegador: se lee tras montar para no romper la hidratación
+  // La preferencia se lee tras montar: localStorage no existe en el servidor
   useEffect(() => {
-    setLang(deviceLang());
     try {
       if (localStorage.getItem(SCOPE_KEY) === 'all') setScope('all');
     } catch {
@@ -50,29 +42,28 @@ export function NewsView() {
     }
   };
 
-  const onlyDeviceLang = lang !== null && scope === 'device';
+  const onlyDeviceLang = scope === 'device';
   const all = (data?.items ?? []).filter(
     (n) => (filter === 'all' || n.promotion === filter) && (!onlyDeviceLang || n.lang === lang),
   );
   const shown = all.slice(0, visible);
   const sourceNames = data ? [...new Set(data.sources.filter((s) => s.ok).map((s) => s.name))] : [];
-  const updated = data
-    ? new Date(data.updatedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-    : '';
+  const updated =
+    data && timeZone
+      ? new Date(data.updatedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone })
+      : '';
 
   return (
     <>
-      <PageHeader title="Noticias" />
-      {lang ? (
-        <div className="segment" role="group" aria-label="Idioma de las noticias">
-          <button type="button" aria-pressed={scope === 'device'} onClick={() => changeScope('device')}>
-            {LANG_LABEL[lang]}
-          </button>
-          <button type="button" aria-pressed={scope === 'all'} onClick={() => changeScope('all')}>
-            Todos los idiomas
-          </button>
-        </div>
-      ) : null}
+      <PageHeader title={t('news.title')} />
+      <div className="segment" role="group" aria-label={t('news.langAria')}>
+        <button type="button" aria-pressed={scope === 'device'} onClick={() => changeScope('device')}>
+          {t(lang === 'es' ? 'news.lang.es' : 'news.lang.en')}
+        </button>
+        <button type="button" aria-pressed={scope === 'all'} onClick={() => changeScope('all')}>
+          {t('news.allLangs')}
+        </button>
+      </div>
       <FilterChips
         value={filter}
         onChange={(next) => {
@@ -84,23 +75,21 @@ export function NewsView() {
 
       {status === 'loading' && !data ? (
         <>
-          <p className="muted small notice">Cargando noticias…</p>
+          <p className="muted small notice">{t('news.loading')}</p>
           <NewsSkeleton />
         </>
       ) : null}
 
       {status === 'error' && !data ? (
         <div className="state">
-          <p>No se pudieron cargar las noticias. Comprueba tu conexión e inténtalo de nuevo.</p>
+          <p>{t('news.error')}</p>
           <button type="button" className="button" onClick={reload}>
-            Reintentar
+            {t('common.retry')}
           </button>
         </div>
       ) : null}
 
-      {status === 'error' && data ? (
-        <p className="muted small notice">No se pudo actualizar; se muestran las últimas noticias cargadas.</p>
-      ) : null}
+      {status === 'error' && data ? <p className="muted small notice">{t('news.stale')}</p> : null}
 
       {data ? (
         <>
@@ -112,10 +101,8 @@ export function NewsView() {
 
           {all.length === 0 ? (
             <p className="empty">
-              {filter === 'all'
-                ? 'No hay noticias ahora mismo.'
-                : 'No hay noticias de esta promoción por ahora.'}
-              {onlyDeviceLang ? ' Prueba con «Todos los idiomas».' : ''}
+              {filter === 'all' ? t('news.empty') : t('news.emptyPromo')}
+              {onlyDeviceLang ? ` ${t('news.tryAllLangs')}` : ''}
             </p>
           ) : null}
 
@@ -126,14 +113,13 @@ export function NewsView() {
                 className="button button--center"
                 onClick={() => setVisible((v) => v + PAGE)}
               >
-                Mostrar más
+                {t('common.showMore')}
               </button>
             </div>
           ) : null}
 
           <p className="muted small sources">
-            Fuentes: {sourceNames.join(', ') || 'ninguna disponible'}. Actualizado a las {updated}. Cada noticia
-            enlaza a la web original.
+            {t('news.sources', { sources: sourceNames.join(', ') || t('news.noSources'), time: updated })}
           </p>
         </>
       ) : null}

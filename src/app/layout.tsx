@@ -3,6 +3,8 @@ import { Barlow, Barlow_Condensed } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { AppShell } from '../components/AppShell';
 import { ServiceWorkerRegister } from '../components/ServiceWorkerRegister';
+import { SettingsProvider } from '../i18n/SettingsProvider';
+import { getRequestI18n } from '../i18n/server';
 import './globals.css';
 
 const barlow = Barlow({
@@ -19,13 +21,16 @@ const barlowCondensed = Barlow_Condensed({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: { default: 'WrestleTrack', template: '%s · WrestleTrack' },
-  description: 'Noticias, storylines y calendario de shows de lucha libre.',
-  applicationName: 'WrestleTrack',
-  appleWebApp: { capable: true, title: 'WrestleTrack', statusBarStyle: 'black-translucent' },
-  formatDetection: { telephone: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getRequestI18n();
+  return {
+    title: { default: 'WrestleTrack', template: '%s · WrestleTrack' },
+    description: t('meta.description'),
+    applicationName: 'WrestleTrack',
+    appleWebApp: { capable: true, title: 'WrestleTrack', statusBarStyle: 'black-translucent' },
+    formatDetection: { telephone: false },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#0D0D0E',
@@ -34,11 +39,16 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+// El idioma sale de la cookie de ajustes o, en automático, del idioma del navegador
+// (cabecera Accept-Language), así la página llega ya en el idioma correcto.
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const { settings, device, lang } = await getRequestI18n();
   return (
-    <html lang="es" className={`${barlow.variable} ${barlowCondensed.variable}`}>
+    <html lang={lang} className={`${barlow.variable} ${barlowCondensed.variable}`}>
       <body>
-        <AppShell>{children}</AppShell>
+        <SettingsProvider initialSettings={settings} deviceLang={device.lang} deviceLocale={device.locale}>
+          <AppShell>{children}</AppShell>
+        </SettingsProvider>
         <ServiceWorkerRegister />
       </body>
     </html>

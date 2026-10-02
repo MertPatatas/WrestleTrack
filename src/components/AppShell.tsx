@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useT } from '../i18n/SettingsProvider';
 import { navItems } from './nav';
 import { UpcomingRail } from './UpcomingRail';
 import { Wordmark } from './Wordmark';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const t = useT();
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
   const showRail = !pathname.startsWith('/shows');
 
@@ -22,7 +24,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Escritorio: barra lateral */}
       <aside className="sidebar">
         <Wordmark large />
-        <nav className="side-nav" aria-label="Navegación principal">
+        <nav className="side-nav" aria-label={t('nav.main')}>
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -31,7 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               aria-current={isActive(item.href) ? 'page' : undefined}
             >
               {item.icon}
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </Link>
           ))}
         </nav>
@@ -48,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </main>
 
-      <nav className="tabbar" aria-label="Navegación principal">
+      <nav className="tabbar" aria-label={t('nav.main')}>
         {navItems.map((item) => (
           <Link
             key={item.href}
@@ -57,7 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             aria-current={isActive(item.href) ? 'page' : undefined}
           >
             {item.icon}
-            <span>{item.label}</span>
+            <span>{t(item.label)}</span>
           </Link>
         ))}
       </nav>

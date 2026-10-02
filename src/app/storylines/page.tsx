@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import { pageTitle } from '../../i18n/server';
 import { StorylinesView } from '../../views/StorylinesView';
 
-export const metadata: Metadata = { title: 'Storylines' };
+export const generateMetadata = () => pageTitle('storylines.title');
 
 export default function Page() {
   return <StorylinesView />;

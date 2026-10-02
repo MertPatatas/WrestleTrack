@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import { pageTitle } from '../../i18n/server';
 import { ProfileView } from '../../views/ProfileView';
 
-export const metadata: Metadata = { title: 'Perfil' };
+export const generateMetadata = () => pageTitle('profile.title');
 
 export default function Page() {
   return <ProfileView />;

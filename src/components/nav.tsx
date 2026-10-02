@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
+import type { MessageKey } from '../i18n/messages';
 
 export interface NavItem {
   href: string;
-  label: string;
+  label: MessageKey;
   icon: ReactNode;
 }
 
@@ -28,7 +29,7 @@ function Icon({ children }: { children: ReactNode }) {
 export const navItems: NavItem[] = [
   {
     href: '/',
-    label: 'Inicio',
+    label: 'nav.home',
     icon: (
       <Icon>
         <path d="M3 11.5 12 4l9 7.5" />
@@ -38,7 +39,7 @@ export const navItems: NavItem[] = [
   },
   {
     href: '/noticias',
-    label: 'Noticias',
+    label: 'nav.news',
     icon: (
       <Icon>
         <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -48,7 +49,7 @@ export const navItems: NavItem[] = [
   },
   {
     href: '/storylines',
-    label: 'Storylines',
+    label: 'nav.storylines',
     icon: (
       <Icon>
         <circle cx="6" cy="6" r="2.5" />
@@ -60,7 +61,7 @@ export const navItems: NavItem[] = [
   },
   {
     href: '/shows',
-    label: 'Shows',
+    label: 'nav.shows',
     icon: (
       <Icon>
         <rect x="3.5" y="5" width="17" height="15" rx="2" />
@@ -70,7 +71,7 @@ export const navItems: NavItem[] = [
   },
   {
     href: '/perfil',
-    label: 'Perfil',
+    label: 'nav.profile',
     icon: (
       <Icon>
         <circle cx="12" cy="8.5" r="3.5" />

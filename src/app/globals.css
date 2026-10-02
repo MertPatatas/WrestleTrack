@@ -177,6 +177,9 @@ button {
   font-size: 14px;
   font-weight: 600;
 }
+.link--inline {
+  font-size: inherit;
+}
 
 .notice {
   padding-bottom: 12px;
@@ -364,8 +367,111 @@ button {
   font-size: 17px;
   font-weight: 700;
 }
+.show-row--special {
+  border-color: var(--gold);
+}
+.show-row--live {
+  border-color: var(--success);
+}
+.show-star {
+  color: var(--gold);
+}
+.show-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+.show-link:hover {
+  text-decoration-color: var(--gold);
+}
+.show-time {
+  min-width: 52px; /* en inglés la hora lleva AM/PM y ocupa más */
+  white-space: nowrap;
+  flex: none;
+  align-self: flex-start;
+  padding-top: 1px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+}
+.show-tbd {
+  display: block;
+  color: var(--silver);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.show-details {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.show-note {
+  color: var(--gold);
+  margin-top: 2px;
+}
+.show-side {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  align-self: flex-start;
+}
+.show-live {
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.day-group + .day-group {
+  margin-top: 20px;
+}
+.day-heading {
+  color: var(--silver);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
 
 /* ---------- Perfil ---------- */
+
+.select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 40px 0 12px;
+  background-color: var(--surface-alt);
+  /* Flecha propia para que se vea igual en todos los navegadores */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23c99a4b' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ivory);
+  font: inherit;
+  font-size: 16px; /* 16px evita que iOS haga zoom al tocarlo */
+  appearance: none;
+  cursor: pointer;
+}
+.select:hover {
+  border-color: var(--gold);
+}
+.select option,
+.select optgroup {
+  background: var(--surface);
+  color: var(--ivory);
+}
+.select--placeholder {
+  cursor: default;
+}
+.setting-help {
+  margin-top: 8px;
+}
 
 .row {
   display: flex;
