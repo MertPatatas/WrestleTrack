@@ -487,48 +487,15 @@ button {
   opacity: 0.38;
   transform: scale(1.04);
 }
-/* Fondo: el cartel muy desenfocado (solo aporta sus colores; los de Wikipedia son pequeños) */
+/* Fondo con el cartel del evento: mismo tratamiento que la foto del ring (oscurecido y algo
+   desenfocado), pero tapándola del todo. El desenfoque disimula la baja resolución. */
 .hero-bg--poster {
-  filter: blur(22px) saturate(1.3) brightness(0.7);
-  opacity: 0.9;
-  transform: scale(1.25);
+  filter: grayscale(0.35) contrast(1.1) brightness(0.6) blur(2px);
+  opacity: 0.75;
+  transform: scale(1.06);
   background-size: cover;
-  background-position: center;
-}
-/* Cartel nítido: arriba en móvil, a la derecha en escritorio */
-.hero-body {
-  position: relative;
-  z-index: 1;
-}
-.hero-body--poster {
-  display: flex;
-  flex-direction: column;
-}
-.hero-poster {
-  display: block;
-  align-self: center;
-  max-width: 70%;
-  max-height: 200px;
-  margin: 18px auto 0;
-  border-radius: var(--radius-md);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-  object-fit: contain;
-}
-@media (min-width: 720px) {
-  .hero-body--poster {
-    flex-direction: row-reverse;
-    align-items: center;
-  }
-  .hero-body--poster .hero-content {
-    flex: 1;
-    min-width: 0;
-  }
-  .hero-poster {
-    flex: none;
-    max-width: 34%;
-    max-height: 240px;
-    margin: 18px 18px 18px 0;
-  }
+  background-position: center 28%;
+  background-color: #0b0b0c;
 }
 .hero {
   position: relative;

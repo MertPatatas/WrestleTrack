@@ -117,7 +117,7 @@ export function ShowDetailView({ id }: { id: string }) {
       </Link>
 
       <header className={`hero hero--static brand-${show.promotion}`}>
-        <HeroWithPoster image={show.image} alt={name}>
+        <HeroWithPoster image={show.image}>
           {special ? <p className="hero-kicker">★ {t('shows.special')}</p> : null}
           <div className="hero-logo">
             <PromoLogo id={show.promotion} height={40} />
