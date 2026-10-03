@@ -12,7 +12,7 @@ const MAX_TITLES = 400; // tope de seguridad por si una categoría crece mucho
 
 type Params = Record<string, string>;
 
-async function api(params: Params): Promise<any> {
+export async function api(params: Params): Promise<any> {
   const query = new URLSearchParams({ format: 'json', formatversion: '2', maxlag: '5', ...params });
   const res = await fetch(`${API}?${query}`, {
     headers: { 'User-Agent': USER_AGENT, 'Api-User-Agent': USER_AGENT },
@@ -77,7 +77,7 @@ function field(box: string, name: string): string {
   return box.match(new RegExp(`\\n\\s*\\|\\s*${name}\\s*=\\s*([^\\n]*)`, 'i'))?.[1]?.trim() ?? '';
 }
 
-function clean(raw: string): string {
+export function clean(raw: string): string {
   // Plantillas anidadas: se quitan de dentro hacia fuera
   let text = raw;
   for (let i = 0; i < 3 && /\{\{/.test(text); i++) text = text.replace(/\{\{[^{}]*\}\}/g, '');

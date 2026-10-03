@@ -78,7 +78,7 @@ function reminder(s: Show, lead: number, c: Ctx): PushPayload {
   return {
     title: lead === 0 ? c.t('push.startsNow', { name }) : c.t('push.startsIn', { name, lead: leadText(lead, c) }),
     body: details,
-    url: '/shows',
+    url: `/shows/${encodeURIComponent(s.id)}`,
     tag: `show-${s.id}`,
   };
 }
@@ -90,7 +90,7 @@ function announcement(s: Show, c: Ctx): PushPayload {
       name: `${PROMO_NAMES[s.promotion]} ${displayName(s, c.lang)}`.trim(),
       date: `${dateOf(s, c)}${s.timeTbd ? '' : ` ${timeOf(s, c)}`}`,
     }),
-    url: '/shows',
+    url: `/shows/${encodeURIComponent(s.id)}`,
     tag: `announce-${s.id}`,
   };
 }

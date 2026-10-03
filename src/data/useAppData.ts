@@ -44,7 +44,7 @@ export function useAppData() {
       mounted
         ? {
             storylines: getStorylines(),
-            shows: buildSchedule(Date.now(), { episodes: auto?.episodes, autoEvents: auto?.events }),
+            shows: buildSchedule(Date.now(), { futureDays: 120, episodes: auto?.episodes, autoEvents: auto?.events }),
             scheduleLive: auto !== null,
           }
         : null,

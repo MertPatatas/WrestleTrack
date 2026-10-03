@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { Show } from '../data/types';
 import { useT } from '../i18n/SettingsProvider';
 import type { Formatter } from '../lib/dates';
@@ -44,8 +45,12 @@ export function ShowRow({
     );
   }
 
+  // Toda la fila abre la página del show (cartelera y dónde verlo)
   return (
-    <div className={`show-row${special ? ' show-row--special' : ''}${status.live ? ' show-row--live' : ''}`}>
+    <Link
+      href={`/shows/${encodeURIComponent(show.id)}`}
+      className={`show-row show-row--link${special ? ' show-row--special' : ''}${status.live ? ' show-row--live' : ''}`}
+    >
       {left}
       <div className="show-info">
         <p className="show-name">
@@ -54,13 +59,7 @@ export function ShowRow({
               ★{' '}
             </span>
           ) : null}
-          {show.url ? (
-            <a className="show-link" href={show.url} target="_blank" rel="noopener noreferrer">
-              {name}
-            </a>
-          ) : (
-            name
-          )}
+          {name}
         </p>
         {variant === 'date' ? (
           <p className="muted small">
@@ -79,6 +78,6 @@ export function ShowRow({
           <span className={status.live ? 'show-live' : 'muted small'}>{status.text}</span>
         ) : null}
       </div>
-    </div>
+    </Link>
   );
 }
