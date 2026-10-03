@@ -542,6 +542,14 @@ button {
   gap: 10px;
   margin-top: 12px;
 }
+.button--danger {
+  background: transparent;
+  color: #e07b6a;
+  border: 1px solid rgba(224, 123, 106, 0.5);
+}
+.button--danger:hover {
+  border-color: #e07b6a;
+}
 .button-row--flush {
   margin-top: 0;
 }
@@ -634,6 +642,61 @@ button {
   margin-top: 18px;
   background: #fff;
   color: #1f1f1f;
+}
+
+.login-legal {
+  margin-top: 18px;
+  text-align: center;
+}
+
+/* ---------- Textos legales ---------- */
+
+.legal {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) 16px calc(env(safe-area-inset-bottom, 0px) + 40px);
+  line-height: 1.6;
+}
+.legal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.legal-intro {
+  margin: 16px 0 8px;
+  color: var(--ivory);
+}
+.legal-section {
+  margin-top: 24px;
+}
+.legal-section h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.legal-section p,
+.legal-section li {
+  color: var(--silver);
+  overflow-wrap: anywhere;
+}
+.legal-section p + p,
+.legal-section ul + p {
+  margin-top: 8px;
+}
+.legal-section ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+.legal-section li + li {
+  margin-top: 6px;
+}
+.legal-links {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
 }
 
 /* ---------- Cuenta y notificaciones ---------- */

@@ -113,6 +113,18 @@ const es = {
   'login.errorProvider': 'No se pudo iniciar sesión con Google. Inténtalo de nuevo.',
   'login.notConfigured': 'El inicio de sesión aún no está configurado en el servidor.',
 
+  'login.legalPrefix': 'Al continuar aceptas las',
+  'login.legalAnd': 'y la',
+
+  'legal.privacy': 'Política de privacidad',
+  'legal.terms': 'Condiciones del servicio',
+  'legal.updated': 'Última actualización: {date}',
+  'legal.back': 'Volver',
+
+  'account.delete': 'Eliminar cuenta',
+  'account.deleteConfirm':
+    '¿Seguro que quieres eliminar tu cuenta? Se borrarán tus favoritos, ajustes y notificaciones de todos tus dispositivos. No se puede deshacer.',
+  'account.deleteError': 'No se pudo eliminar la cuenta. Inténtalo de nuevo más tarde.',
   'account.title': 'Cuenta',
   'account.signedInAs': 'Sesión iniciada como {email}',
   'account.signOut': 'Cerrar sesión',
@@ -294,6 +306,18 @@ const en: Messages = {
   'login.errorProvider': 'Google sign-in failed. Please try again.',
   'login.notConfigured': 'Sign-in is not set up on the server yet.',
 
+  'login.legalPrefix': 'By continuing you accept the',
+  'login.legalAnd': 'and the',
+
+  'legal.privacy': 'Privacy policy',
+  'legal.terms': 'Terms of service',
+  'legal.updated': 'Last updated: {date}',
+  'legal.back': 'Back',
+
+  'account.delete': 'Delete account',
+  'account.deleteConfirm':
+    'Are you sure you want to delete your account? Your favorites, settings and notifications will be erased from all your devices. This cannot be undone.',
+  'account.deleteError': 'The account could not be deleted. Please try again later.',
   'account.title': 'Account',
   'account.signedInAs': 'Signed in as {email}',
   'account.signOut': 'Sign out',

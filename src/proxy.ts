@@ -5,6 +5,7 @@ import { SUPABASE_KEY, SUPABASE_URL, supabaseConfigured } from './lib/supabase/e
 // Rutas que se pueden usar sin iniciar sesión
 const PUBLIC_PATHS = [
   /^\/login(\/|$)/,
+  /^\/(privacidad|condiciones)$/, // textos legales (Google los revisa sin sesión)
   /^\/auth\//, // vuelta del inicio de sesión (Google y enlace del email)
   /^\/api\/push\/dispatch$/, // la llama Upstash QStash (con firma propia)
   /^\/api\/schedule$/, // datos públicos; los usa la revisión de avisos

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Wordmark } from '../components/Wordmark';
@@ -167,6 +168,18 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
             {t(message)}
           </p>
         ) : null}
+
+        <p className="muted small login-legal">
+          {t('login.legalPrefix')}{' '}
+          <Link href="/condiciones" className="link link--inline">
+            {t('legal.terms')}
+          </Link>{' '}
+          {t('login.legalAnd')}{' '}
+          <Link href="/privacidad" className="link link--inline">
+            {t('legal.privacy')}
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );
