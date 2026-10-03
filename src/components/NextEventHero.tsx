@@ -1,10 +1,44 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, type ReactNode } from 'react';
 import type { Show } from '../data/types';
 import { useT } from '../i18n/SettingsProvider';
 import { showDayKey, type Formatter } from '../lib/dates';
 import { PromoLogo } from './PromoLogo';
+
+/**
+ * Cuerpo de las cabeceras con el cartel del evento (Wikipedia o NJPW):
+ * el cartel nítido a su tamaño (a la derecha en escritorio, arriba en móvil) y, de fondo, una
+ * copia muy desenfocada que da sus colores. Los carteles de Wikipedia son pequeños (política de
+ * imágenes con derechos), por eso no se estiran. Sin cartel, o si no carga, el fondo es el ring.
+ */
+export function HeroWithPoster({ image, alt, children }: { image?: string; alt: string; children: ReactNode }) {
+  const [failed, setFailed] = useState(false);
+  const poster = image && !failed ? image : undefined;
+  return (
+    <>
+      <div className="hero-bg" aria-hidden="true" />
+      {poster ? (
+        <div className="hero-bg hero-bg--poster" style={{ backgroundImage: `url(${JSON.stringify(poster)})` }} aria-hidden="true" />
+      ) : null}
+      <div className={`hero-body${poster ? ' hero-body--poster' : ''}`}>
+        {poster ? (
+          <img
+            className="hero-poster"
+            src={poster}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={() => setFailed(true)}
+          />
+        ) : null}
+        <div className="hero-content">{children}</div>
+      </div>
+    </>
+  );
+}
 
 // Tarjeta destacada de la portada: el próximo PPV/PLE, con cuenta atrás
 export function NextEventHero({ show, fmt, now }: { show: Show; fmt: Formatter; now: number }) {
@@ -19,8 +53,7 @@ export function NextEventHero({ show, fmt, now }: { show: Show; fmt: Formatter; 
 
   return (
     <Link href={`/shows/${encodeURIComponent(show.id)}`} className={`hero brand-${show.promotion}`}>
-      <div className="hero-bg" aria-hidden="true" />
-      <div className="hero-content">
+      <HeroWithPoster image={show.image} alt={name}>
         <p className="hero-kicker">{t('home.nextBig')}</p>
         <div className="hero-logo">
           <PromoLogo id={show.promotion} height={44} />
@@ -52,7 +85,7 @@ export function NextEventHero({ show, fmt, now }: { show: Show; fmt: Formatter; 
         )}
 
         <span className="hero-cta">{t('home.seeCard')} →</span>
-      </div>
+      </HeroWithPoster>
     </Link>
   );
 }

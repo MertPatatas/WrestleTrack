@@ -60,6 +60,7 @@ function specialToShow(e: SpecialEvent): Show {
     broadcast: e.broadcast,
     note: e.note,
     url: e.url,
+    image: e.image,
     auto: e.auto,
   };
 }
@@ -159,6 +160,7 @@ export function buildSchedule(
     if (!existing) shows.push(specialToShow(e));
     else if (existing.kind !== 'weekly') {
       existing.url ??= e.url;
+      existing.image ??= e.image;
       existing.venue ??= e.venue;
     }
   }

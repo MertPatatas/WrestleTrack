@@ -169,6 +169,17 @@ export function eventsFromArticle(title: string, content: string): SpecialEvent[
   const trim = (s: string) => s.replace(/^[\s,/]+|[\s,/]+$/g, '');
   // El nombre a veces trae una segunda línea ("Crown Jewel<br>Riyadh"): se queda la primera
   const name = trim(clean(field(box, 'name')).split(' / ')[0]) || title.replace(/\s*\(\d{4}\)$/, '');
+  // Cartel del evento ("image = Money in the Bank 2026 poster.jpg"). Special:FilePath redirige
+  // a una versión de 1000 px del archivo, sin tener que consultar la API.
+  const imageFile = field(box, 'image')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/^\[\[|\]\]$/g, '')
+    .replace(/^(File|Image|Archivo):/i, '')
+    .split('|')[0]
+    .trim();
+  const image = /\.(jpe?g|png|webp|gif)$/i.test(imageFile)
+    ? `https://en.wikipedia.org/wiki/Special:FilePath/${encodeURIComponent(imageFile.replace(/ /g, '_'))}?width=1000`
+    : undefined;
   const venue = trim(clean(field(box, 'venue')).replace(/\bTBA\b/g, ''));
   const city = trim(clean(field(box, 'city')).replace(/\bTBA\b/g, ''));
   const place = [venue, city.split(',')[0]].filter(Boolean).join(', ');
@@ -183,6 +194,7 @@ export function eventsFromArticle(title: string, content: string): SpecialEvent[
     timeZone: guessTimeZone(`${venue} ${city}`),
     venue: place || undefined,
     url: `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`,
+    image,
     auto: true,
   }));
 }

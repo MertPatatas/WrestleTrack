@@ -45,6 +45,7 @@ export interface SpecialEvent {
   broadcast?: string;
   note?: string;
   url?: string; // página con más información
+  image?: string; // cartel o imagen promocional del evento
   auto?: boolean; // detectado automáticamente
 }
 

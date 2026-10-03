@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { HeroWithPoster } from '../components/NextEventHero';
 import { PromoLogo } from '../components/PromoLogo';
 import { REGIONS, detectRegion, whereToWatch, type Region } from '../data/broadcast';
 import type { Show } from '../data/types';
@@ -116,8 +117,7 @@ export function ShowDetailView({ id }: { id: string }) {
       </Link>
 
       <header className={`hero hero--static brand-${show.promotion}`}>
-        <div className="hero-bg" aria-hidden="true" />
-        <div className="hero-content">
+        <HeroWithPoster image={show.image} alt={name}>
           {special ? <p className="hero-kicker">★ {t('shows.special')}</p> : null}
           <div className="hero-logo">
             <PromoLogo id={show.promotion} height={40} />
@@ -126,7 +126,7 @@ export function ShowDetailView({ id }: { id: string }) {
           {status?.text || ended ? (
             <p className={status?.live ? 'hero-live' : 'hero-meta'}>{ended ? t('detail.finished') : status?.text}</p>
           ) : null}
-        </div>
+        </HeroWithPoster>
       </header>
 
       <section className="card detail-facts">

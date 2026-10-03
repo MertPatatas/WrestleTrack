@@ -274,6 +274,7 @@ export function termsOfService(lang: Lang): LegalDoc {
         list: [
           'Las noticias se muestran como titular y extracto breve, con enlace a la web original; sus derechos pertenecen a sus autores.',
           'Los horarios y eventos se recopilan automáticamente de fuentes públicas (como TVmaze, la web de NJPW y Wikipedia, cuyos contenidos están bajo licencia CC BY-SA). Pueden contener errores o cambiar a última hora: compruébalos en las fuentes oficiales si es importante para ti.',
+          'Los carteles de los eventos se muestran directamente desde su fuente (Wikipedia o la web de NJPW) para identificar cada evento; sus derechos pertenecen a las promotoras.',
           'Los resúmenes de storylines son orientativos.',
         ],
       },
@@ -361,6 +362,7 @@ function termsEn(): LegalDoc {
         list: [
           'News is shown as a headline and short excerpt linking to the original site; its rights belong to its authors.',
           'Schedules and events are collected automatically from public sources (such as TVmaze, the NJPW website and Wikipedia, whose content is licensed under CC BY-SA). They may contain errors or change at the last minute: check official sources if it matters to you.',
+          'Event posters are shown directly from their source (Wikipedia or the NJPW website) to identify each event; their rights belong to the promotions.',
           'Storyline summaries are for guidance only.',
         ],
       },

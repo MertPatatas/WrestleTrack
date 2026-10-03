@@ -5,6 +5,8 @@ import type { SpecialEvent } from '../../../data/schedule';
 // hora de inicio (hora de Japón). Solo nos quedamos con los eventos grandes.
 
 const API = 'https://app.njpw1972.com';
+// Donde la web de NJPW sirve los carteles (la misma ruta que usa su página)
+const IMAGE_BASE = 'https://www.njpw.co.jp/wp-content/uploads/';
 const MAX_PAGES = 5;
 
 async function get<T>(path: string): Promise<T> {
@@ -32,6 +34,7 @@ interface Tournament {
   venue?: { stadium_name?: string } | null;
 }
 interface SeriesSchedule {
+  poster_image_new?: string; // cartel de la gira o evento: "2026/07/20261012_KOPW_LOGO.jpg"
   tournaments?: Tournament[];
 }
 
@@ -112,6 +115,7 @@ export async function fetchNjpwBigEvents(today: string = new Date().toISOString(
           venue,
           broadcast: 'NJPW World',
           url: `https://www.njpw1972.com/tornament/${t.post_id}`,
+          image: schedule.poster_image_new ? `${IMAGE_BASE}${schedule.poster_image_new}` : undefined,
           auto: true,
         });
       });
