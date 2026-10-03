@@ -8,7 +8,8 @@
 - [x] 4b. Calendario automático (`/api/schedule`, se refresca cada 6 h): TVmaze (semanales con cambios y PLE/PPV de WWE, NXT y AEW), API oficial de NJPW (eventos grandes con hora) y Wikipedia (resto, solo fecha)
 - [ ] 4c. Fuente automática para CMLL (ahora usa su horario semanal fijo) y hora de los PLE de AAA
 - [ ] 5. Storylines: modelo de datos + resúmenes generados con IA (primero WWE y AEW)
-- [x] 6. Notificaciones web push sin cuentas: cada dispositivo se registra con sus preferencias (Neon) — tipos de evento, recordatorios, anuncios de PPV/PLE nuevos y resumen diario/semanal. Upstash QStash llama a `/api/push/dispatch` cada 5 min. En iPhone requieren la app instalada en la pantalla de inicio
+- [x] 6. Cuentas obligatorias con Supabase Auth (Google y email con enlace o código) y base de datos Supabase: favoritos, ajustes y notificaciones sincronizados. Notificaciones web push: tipos de evento, recordatorios, anuncios de PPV/PLE nuevos y resumen diario/semanal. Upstash QStash llama a `/api/push/dispatch` cada 5 min. En iPhone requieren la app instalada en la pantalla de inicio
+- [ ] 6b. Emails de inicio de sesión con SMTP propio (Gmail) para poder enviar el código a cualquier usuario
 - [ ] 7. Si se quisiera publicar en las tiendas: envolver la web (TWA en Google Play; Apple es más estricto con apps que son solo una web)
 
 ## Notas

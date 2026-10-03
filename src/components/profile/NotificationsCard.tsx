@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useSettings } from '../../i18n/SettingsProvider';
 import type { MessageKey } from '../../i18n/messages';
 import {
+  currentSubscription,
   disablePush,
   enablePush,
-  isEnabledHere,
   pushSupport,
   sendTestPush,
   type PushSupport,
@@ -18,10 +18,10 @@ type DeviceState = 'checking' | 'on' | 'off' | 'busy';
 const KINDS: NotifyKinds[] = ['all', 'weekly', 'special'];
 const DIGESTS: DigestMode[] = ['off', 'daily', 'weekly'];
 
-// Notificaciones de este dispositivo: activarlas y elegir de qué y cuándo avisar.
-// No hace falta cuenta: las preferencias se guardan con el dispositivo.
+// Notificaciones: activarlas en este dispositivo y elegir de qué y cuándo avisar.
+// Las preferencias son de la cuenta y valen para todos sus dispositivos.
 export function NotificationsCard() {
-  const { t, notifications: prefs, updateNotifications, locale, deviceSettings } = useSettings();
+  const { t, notifications: prefs, updateNotifications, locale } = useSettings();
   const [support, setSupport] = useState<PushSupport | null>(null);
   const [device, setDevice] = useState<DeviceState>('checking');
   const [message, setMessage] = useState<{ key: MessageKey; error?: boolean; detail?: string } | null>(null);
@@ -32,16 +32,15 @@ export function NotificationsCard() {
     setSupport(s);
     if (s !== 'supported') return;
     if (Notification.permission === 'denied') setMessage({ key: 'notif.denied', error: true });
-    isEnabledHere()
-      .then((on) => setDevice(on ? 'on' : 'off'))
+    currentSubscription()
+      .then((sub) => setDevice(sub ? 'on' : 'off'))
       .catch(() => setDevice('off'));
   }, []);
 
   const enable = async () => {
-    if (!deviceSettings) return;
     setDevice('busy');
     setMessage(null);
-    const result = await enablePush(deviceSettings);
+    const result = await enablePush();
     setDevice(result === 'enabled' ? 'on' : 'off');
     if (result === 'denied') setMessage({ key: 'notif.denied', error: true });
     if (result === 'error') setMessage({ key: 'notif.error', error: true });
@@ -58,7 +57,7 @@ export function NotificationsCard() {
     setMessage(null);
     const result = await sendTestPush();
     if (result.ok) setMessage({ key: 'notif.testSent' });
-    else if (result.error === 'Dispositivo no registrado' || result.error === 'not-registered') {
+    else if (result.error === 'Dispositivo no registrado') {
       // El servidor no lo conoce: se vuelve a activar
       setDevice('off');
       setMessage({ key: 'notif.testFailed', error: true });
@@ -66,6 +65,7 @@ export function NotificationsCard() {
   };
 
   const toggleLead = (lead: number) => {
+    if (!prefs) return;
     const leads = prefs.leads.includes(lead) ? prefs.leads.filter((l) => l !== lead) : [...prefs.leads, lead];
     updateNotifications({ leads });
   };
@@ -99,7 +99,7 @@ export function NotificationsCard() {
                 type="button"
                 className="button"
                 onClick={enable}
-                disabled={device === 'busy' || device === 'checking' || !deviceSettings}
+                disabled={device === 'busy' || device === 'checking'}
               >
                 {t('notif.enable')}
               </button>
@@ -113,7 +113,12 @@ export function NotificationsCard() {
           </p>
         ) : null}
 
-        {/* Preferencias */}
+        {/* Preferencias de la cuenta (cargando hasta que llega el perfil) */}
+        {!prefs ? (
+          <div className="notif-prefs">
+            <div className="skeleton-line" aria-hidden="true" />
+          </div>
+        ) : (
         <div className="notif-prefs">
           <p className="field-label" id="notif-kinds">
             {t('notif.kinds')}
@@ -189,8 +194,9 @@ export function NotificationsCard() {
               </select>
             ) : null}
           </div>
-          <p className="muted small setting-help">{t('notif.deviceNote')}</p>
+          <p className="muted small setting-help">{t('notif.accountNote')}</p>
         </div>
+        )}
       </div>
     </section>
   );

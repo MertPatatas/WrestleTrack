@@ -14,6 +14,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
   const showRail = !pathname.startsWith('/shows');
 
+  // La pantalla de inicio de sesión va sola, sin menús
+  if (pathname.startsWith('/login')) return <main className="main-bare">{children}</main>;
+
   return (
     <div className="shell">
       {/* Móvil: cabecera arriba y pestañas abajo */}

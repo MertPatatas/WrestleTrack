@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { InstallCard } from '../components/InstallCard';
 import { PageHeader } from '../components/PageHeader';
+import { AccountCard } from '../components/profile/AccountCard';
 import { NotificationsCard } from '../components/profile/NotificationsCard';
 import { promotions } from '../data/mock';
 import { FAVORITE_OPTIONS, LANGUAGES, LANGUAGE_NAMES, type FavoritePromotion, type Lang } from '../i18n/config';
@@ -68,6 +69,8 @@ export function ProfileView() {
   return (
     <>
       <PageHeader title={t('profile.title')} />
+
+      <AccountCard />
 
       <section>
         <h2 className="section-title section-title--solo">{t('profile.following')}</h2>

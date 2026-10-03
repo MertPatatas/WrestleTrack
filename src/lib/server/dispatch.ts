@@ -1,14 +1,13 @@
 import 'server-only';
 import type { Show } from '../../data/types';
-import type { Lang } from '../../i18n/config';
+import { isLang, sanitizeFavorites, type Lang } from '../../i18n/config';
 import { translate, type MessageKey } from '../../i18n/messages';
-import type { DeviceSettings } from '../notifications/device';
 import { LEAD_OPTIONS, type NotificationPrefs } from '../notifications/prefs';
 import { buildSchedule } from '../schedule/build';
 import type { ScheduleResponse } from '../schedule/load';
 import { utcToZoned } from '../schedule/time';
-import { db, type DeviceRow } from './db';
-import { rowToSettings } from './devices';
+import { db, type ProfileRow, type SubscriptionRow } from './db';
+import { rowPrefs } from './profile';
 import { sendToSubscriptions, type PushPayload } from './push';
 
 // Se ejecuta cada 5 minutos (Upstash QStash → /api/push/dispatch).
@@ -18,8 +17,22 @@ const WINDOW_MS = 10 * 60_000;
 const HOURLY_WINDOW_MIN = 10;
 const PROMO_NAMES: Record<string, string> = { wwe: 'WWE', aew: 'AEW', cmll: 'CMLL', aaa: 'AAA', njpw: 'NJPW', other: '' };
 
-function wants(show: Show, s: DeviceSettings, prefs: NotificationPrefs): boolean {
-  if (!(s.favorites as string[]).includes(show.promotion)) return false;
+function profileLang(p: ProfileRow): Lang {
+  if (isLang(p.language)) return p.language;
+  if (isLang(p.device_language)) return p.device_language;
+  return 'es';
+}
+
+function profileTimeZone(p: ProfileRow): string {
+  return p.time_zone !== 'auto' ? p.time_zone : (p.device_time_zone ?? 'Europe/Madrid');
+}
+
+function profileLocale(p: ProfileRow, lang: Lang): string {
+  return p.device_locale?.slice(0, 2).toLowerCase() === lang ? p.device_locale : lang === 'es' ? 'es-ES' : 'en-US';
+}
+
+function wants(show: Show, favorites: string[], prefs: NotificationPrefs): boolean {
+  if (!favorites.includes(show.promotion)) return false;
   if (prefs.kinds === 'weekly') return show.kind === 'weekly';
   if (prefs.kinds === 'special') return show.kind !== 'weekly';
   return true;
@@ -98,7 +111,7 @@ function digest(shows: Show[], weekly: boolean, c: Ctx): PushPayload | null {
 }
 
 export interface DispatchResult {
-  devices: number;
+  users: number;
   notifications: number;
   newEvents: number;
   skipped?: boolean; // no tocaba nada: no se ha despertado la base de datos
@@ -119,10 +132,10 @@ function reminderDue(shows: Show[], now: number): boolean {
 export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events'>, now = Date.now()): Promise<DispatchResult> {
   const shows = buildSchedule(now, { pastDays: 1, futureDays: 8, episodes: data.episodes, autoEvents: data.events });
 
-  // La base de datos gratuita (Neon) se duerme tras 5 min sin uso y tiene horas de cómputo limitadas.
-  // Solo se despierta si toca algo: un recordatorio, o la revisión horaria de anuncios y resúmenes.
+  // Solo se consulta la base de datos si toca algo: un recordatorio, o la revisión horaria de
+  // anuncios y resúmenes. El resto de ejecuciones no hacen nada (menos carga en el plan gratuito).
   const hourly = new Date(now).getUTCMinutes() < HOURLY_WINDOW_MIN;
-  if (!hourly && !reminderDue(shows, now)) return { devices: 0, notifications: 0, newEvents: 0, skipped: true };
+  if (!hourly && !reminderDue(shows, now)) return { users: 0, notifications: 0, newEvents: 0, skipped: true };
 
   const sql = await db();
 
@@ -138,36 +151,41 @@ export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events
       autoEvents: data.events,
     }).filter((s) => s.kind !== 'weekly' && new Date(s.startsAt).getTime() > now);
     const keys = [...new Set(upcomingSpecials.map(eventKey))];
-    const firstRun = ((await sql.query('select count(*)::int as n from seen_events')) as { n: number }[])[0].n === 0;
+    const firstRun = (await sql.query<{ n: number }>('select count(*)::int as n from app.seen_events'))[0].n === 0;
     const inserted = keys.length
-      ? ((await sql.query(
-          'insert into seen_events (key) select unnest($1::text[]) on conflict do nothing returning key',
+      ? await sql.query<{ key: string }>(
+          'insert into app.seen_events (key) select unnest($1::text[]) on conflict do nothing returning key',
           [keys],
-        )) as { key: string }[])
+        )
       : [];
     // En la primera ejecución solo se registran: no son anuncios nuevos
     const newKeys = new Set(firstRun ? [] : inserted.map((r) => r.key));
     newEvents = upcomingSpecials.filter((s) => newKeys.has(eventKey(s)));
   }
 
-  // ---- Dispositivos con las notificaciones activadas ----
-  const devices = (await sql.query('select * from devices')) as DeviceRow[];
-  if (devices.length === 0) return { devices: 0, notifications: 0, newEvents: newEvents.length };
+  // ---- Usuarios con algún dispositivo suscrito ----
+  const profiles = await sql.query<ProfileRow>(
+    'select p.* from app.profiles p where exists (select 1 from app.push_subscriptions s where s.user_id = p.user_id)',
+  );
+  if (profiles.length === 0) return { users: 0, notifications: 0, newEvents: newEvents.length };
+  const subs = await sql.query<SubscriptionRow>('select * from app.push_subscriptions where user_id = any($1::uuid[])', [
+    profiles.map((p) => p.user_id),
+  ]);
 
   let notifications = 0;
 
   await Promise.all(
-    devices.map(async (device) => {
-      const settings = rowToSettings(device);
-      const prefs = settings.prefs;
-      const lang = settings.language;
+    profiles.map(async (p) => {
+      const prefs = rowPrefs(p);
+      const favorites: string[] = sanitizeFavorites(p.favorites);
+      const lang = profileLang(p);
       const ctx: Ctx = {
         lang,
-        tz: settings.timeZone,
-        locale: settings.locale.slice(0, 2).toLowerCase() === lang ? settings.locale : lang === 'es' ? 'es-ES' : 'en-US',
+        tz: profileTimeZone(p),
+        locale: profileLocale(p, lang),
         t: (key, vars) => translate(lang, key, vars),
       };
-      const mine = shows.filter((s) => wants(s, settings, prefs));
+      const mine = shows.filter((s) => wants(s, favorites, prefs));
       const pending: { key: string; payload: PushPayload; ttl: number }[] = [];
 
       // Recordatorios
@@ -185,7 +203,7 @@ export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events
       // Anuncios (solo PPV/PLE)
       if (prefs.announce && prefs.kinds !== 'weekly') {
         for (const s of newEvents) {
-          if ((settings.favorites as string[]).includes(s.promotion)) {
+          if (favorites.includes(s.promotion)) {
             pending.push({ key: `a:${eventKey(s)}`, payload: announcement(s, ctx), ttl: 24 * 3600 });
           }
         }
@@ -210,22 +228,24 @@ export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events
         }
       }
 
+      if (pending.length === 0) return;
+      const userSubs = subs.filter((s) => s.user_id === p.user_id);
+
       for (const item of pending) {
         // Se apunta antes de enviar: si dos ejecuciones coinciden, solo una lo envía
-        const claimed = (await sql.query(
-          'insert into device_notifications (device_id, key) values ($1, $2) on conflict do nothing returning key',
-          [device.id, item.key],
-        )) as unknown[];
+        const claimed = await sql.query(
+          'insert into app.notification_log (user_id, key) values ($1, $2) on conflict do nothing returning key',
+          [p.user_id, item.key],
+        );
         if (claimed.length === 0) continue;
-        const { sent, removed } = await sendToSubscriptions([device], item.payload, item.ttl);
+        const { sent } = await sendToSubscriptions(userSubs, item.payload, item.ttl);
         if (sent > 0) notifications++;
-        if (removed > 0) break; // el dispositivo ya no existe
       }
     }),
   );
 
   // Limpieza del registro de avisos
-  await sql.query(`delete from device_notifications where sent_at < now() - interval '30 days'`);
+  await sql.query(`delete from app.notification_log where sent_at < now() - interval '30 days'`);
 
-  return { devices: devices.length, notifications, newEvents: newEvents.length };
+  return { users: profiles.length, notifications, newEvents: newEvents.length };
 }

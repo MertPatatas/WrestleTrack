@@ -2,11 +2,20 @@
 
 import { useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { loadLocalPrefs, saveLocalPrefs, syncDevice } from '../lib/notifications/client';
-import type { DeviceSettings } from '../lib/notifications/device';
-import { DEFAULT_PREFS, type NotificationPrefs } from '../lib/notifications/prefs';
+import { refreshSubscription } from '../lib/notifications/client';
+import type { NotificationPrefs } from '../lib/notifications/prefs';
+import type { ProfileDTO } from '../lib/server/profile';
+import { getSupabase } from '../lib/supabase/client';
+import { supabaseConfigured } from '../lib/supabase/env';
 import { SETTINGS_COOKIE, localeFor, serializeSettings, type Lang, type UserSettings } from './config';
 import { translate, type MessageKey } from './messages';
+
+export type SyncState = 'local' | 'loading' | 'synced' | 'error';
+
+export interface SessionUser {
+  id: string;
+  email: string | null;
+}
 
 interface SettingsContextValue {
   settings: UserSettings;
@@ -21,17 +30,33 @@ interface SettingsContextValue {
   /** Zona horaria del dispositivo; null hasta montar. */
   deviceTimeZone: string | null;
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
-  /** Preferencias de notificaciones de este dispositivo. */
-  notifications: NotificationPrefs;
+  /** Usuario con sesión (null si no hay, o mientras se comprueba). */
+  user: SessionUser | null;
+  signOut: () => Promise<void>;
+  /** Sincronización de ajustes con la cuenta. */
+  sync: SyncState;
+  /** Preferencias de notificaciones de la cuenta (null hasta cargarlas). */
+  notifications: NotificationPrefs | null;
   updateNotifications: (patch: Partial<NotificationPrefs>) => void;
-  /** Lo que se envía al servidor al activar las notificaciones; null hasta montar. */
-  deviceSettings: DeviceSettings | null;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 const ONE_YEAR = 365 * 24 * 3600;
-const SYNC_DELAY_MS = 800;
+
+function writeCookie(settings: UserSettings) {
+  document.cookie = `${SETTINGS_COOKIE}=${serializeSettings(settings)}; Path=/; Max-Age=${ONE_YEAR}; SameSite=Lax`;
+}
+
+async function putProfile(body: object): Promise<ProfileDTO | null> {
+  const res = await fetch('/api/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return ((await res.json()) as { profile: ProfileDTO | null }).profile;
+}
 
 export function SettingsProvider({
   initialSettings,
@@ -47,59 +72,123 @@ export function SettingsProvider({
   const router = useRouter();
   const [settings, setSettings] = useState(initialSettings);
   const [deviceTimeZone, setDeviceTimeZone] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState<NotificationPrefs>(DEFAULT_PREFS);
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [sync, setSync] = useState<SyncState>('local');
+  const [notifications, setNotifications] = useState<NotificationPrefs | null>(null);
+  const syncedUser = useRef<string | null>(null);
 
-  // Solo en el navegador: zona del dispositivo y preferencias de aviso guardadas
+  // La zona del dispositivo solo se conoce en el navegador
   useEffect(() => {
     setDeviceTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    setNotifications(loadLocalPrefs());
+  }, []);
+
+  // Sesión de Supabase (y sus cambios: inicio o cierre de sesión en esta u otra pestaña)
+  useEffect(() => {
+    if (!supabaseConfigured()) return;
+    const supabase = getSupabase();
+    const toUser = (u: { id: string; email?: string | null } | null | undefined): SessionUser | null =>
+      u ? { id: u.id, email: u.email ?? null } : null;
+    supabase.auth.getUser().then(({ data }) => setUser(toUser(data.user)));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(toUser(session?.user)));
+    return () => data.subscription.unsubscribe();
   }, []);
 
   const lang = settings.language === 'auto' ? deviceLang : settings.language;
-  const locale = localeFor(lang, deviceLocale);
-  const timeZone = settings.timeZone === 'auto' ? deviceTimeZone : settings.timeZone;
 
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
+  // Aplica unos ajustes (de la cuenta o del usuario) en este navegador
+  const applyLocal = useCallback(
+    (next: UserSettings, prev: UserSettings) => {
+      writeCookie(next);
+      setSettings(next);
+      // El título de la pestaña y otros textos del servidor dependen del idioma
+      if (next.language !== prev.language) router.refresh();
+    },
+    [router],
+  );
+
+  // Al iniciar sesión: la primera vez se suben los ajustes de este navegador a la cuenta;
+  // las siguientes, se traen los de la cuenta (así todos los dispositivos quedan iguales).
+  useEffect(() => {
+    if (!deviceTimeZone) return;
+    if (!user) {
+      syncedUser.current = null;
+      setSync('local');
+      setNotifications(null);
+      return;
+    }
+    if (syncedUser.current === user.id) return;
+    syncedUser.current = user.id;
+
+    let cancelled = false;
+    const device = { timeZone: deviceTimeZone, language: deviceLang, locale: deviceLocale };
+    setSync('loading');
+    (async () => {
+      try {
+        const res = await fetch('/api/profile');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { profile } = (await res.json()) as { profile: ProfileDTO | null };
+        const saved = profile
+          ? await putProfile({ device }) // solo actualiza los datos del dispositivo
+          : await putProfile({ settings, device });
+        if (cancelled || !saved) return;
+        if (profile) applyLocal(saved.settings, settings);
+        setNotifications(saved.notifications);
+        setSync('synced');
+        // Si este dispositivo ya recibía avisos, queda asociado a esta cuenta
+        void refreshSubscription();
+      } catch (err) {
+        console.warn('[perfil] no se pudo sincronizar:', err);
+        if (!cancelled) {
+          syncedUser.current = null; // se reintenta en la próxima carga
+          setSync('error');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // settings se lee solo al iniciar sesión; no debe relanzar la sincronización
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, deviceTimeZone, deviceLang, deviceLocale, applyLocal]);
+
   const update = useCallback(
     (patch: Partial<UserSettings>) => {
       const next = { ...settings, ...patch };
-      document.cookie = `${SETTINGS_COOKIE}=${serializeSettings(next)}; Path=/; Max-Age=${ONE_YEAR}; SameSite=Lax`;
-      setSettings(next);
-      // El título de la pestaña y otros textos del servidor dependen del idioma
-      if (next.language !== settings.language) router.refresh();
+      applyLocal(next, settings);
+      if (sync === 'synced') {
+        putProfile({ settings: patch }).catch((err) => {
+          console.warn('[perfil] no se pudo guardar:', err);
+          setSync('error');
+        });
+      }
     },
-    [settings, router],
+    [settings, applyLocal, sync],
   );
 
-  const updateNotifications = useCallback((patch: Partial<NotificationPrefs>) => {
-    setNotifications((prev) => {
-      const next = { ...prev, ...patch };
-      saveLocalPrefs(next);
-      return next;
-    });
-  }, []);
-
-  const deviceSettings = useMemo<DeviceSettings | null>(
-    () =>
-      timeZone
-        ? { timeZone, language: lang, locale, favorites: settings.favorites, prefs: notifications }
-        : null,
-    [timeZone, lang, locale, settings.favorites, notifications],
+  const updateNotifications = useCallback(
+    (patch: Partial<NotificationPrefs>) => {
+      if (!notifications) return;
+      setNotifications({ ...notifications, ...patch });
+      putProfile({ notifications: patch })
+        .then((saved) => saved && setNotifications(saved.notifications))
+        .catch((err) => {
+          console.warn('[perfil] no se pudo guardar:', err);
+          setSync('error');
+        });
+    },
+    [notifications],
   );
 
-  // Si este dispositivo recibe notificaciones, el servidor se mantiene al día con sus ajustes
-  const firstSync = useRef(true);
-  useEffect(() => {
-    if (!deviceSettings) return;
-    const timer = setTimeout(() => {
-      syncDevice(deviceSettings).catch((err) => console.warn('[push] no se pudieron guardar los ajustes:', err));
-    }, firstSync.current ? 0 : SYNC_DELAY_MS);
-    firstSync.current = false;
-    return () => clearTimeout(timer);
-  }, [deviceSettings]);
+  const signOut = useCallback(async () => {
+    await getSupabase().auth.signOut();
+    setUser(null);
+    router.replace('/login');
+    router.refresh();
+  }, [router]);
 
   const value = useMemo<SettingsContextValue>(
     () => ({
@@ -107,15 +196,17 @@ export function SettingsProvider({
       update,
       lang,
       deviceLang,
-      locale,
-      timeZone,
+      locale: localeFor(lang, deviceLocale),
+      timeZone: settings.timeZone === 'auto' ? deviceTimeZone : settings.timeZone,
       deviceTimeZone,
       t: (key, vars) => translate(lang, key, vars),
+      user,
+      signOut,
+      sync,
       notifications,
       updateNotifications,
-      deviceSettings,
     }),
-    [settings, update, lang, deviceLang, locale, timeZone, deviceTimeZone, notifications, updateNotifications, deviceSettings],
+    [settings, update, lang, deviceLang, deviceLocale, deviceTimeZone, user, signOut, sync, notifications, updateNotifications],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

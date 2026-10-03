@@ -74,7 +74,7 @@ export async function sendToSubscriptions(
   );
   if (dead.length) {
     const sql = await db();
-    await sql.query('delete from devices where endpoint = any($1)', [dead]);
+    await sql.query('delete from app.push_subscriptions where endpoint = any($1::text[])', [dead]);
   }
   return { sent, removed: dead.length, errors };
 }

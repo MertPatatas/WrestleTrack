@@ -1,10 +1,6 @@
 'use client';
 
-import type { DeviceSettings } from './device';
-import { DEFAULT_PREFS, sanitizePrefs, type NotificationPrefs } from './prefs';
-
-// Notificaciones push en este dispositivo, sin cuentas: el servidor guarda el dispositivo con
-// sus preferencias y le da una clave; el navegador la guarda para poder cambiarlas después.
+// Activar/desactivar las notificaciones push en este dispositivo para la cuenta con sesión.
 
 export type PushSupport =
   | 'supported'
@@ -13,40 +9,6 @@ export type PushSupport =
   | 'not-configured'; // faltan las claves VAPID en el servidor
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const DEVICE_KEY = 'wrestletrack:push-device';
-const PREFS_KEY = 'wrestletrack:notify-prefs';
-
-interface StoredDevice {
-  endpoint: string;
-  token: string;
-}
-
-function read<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, value: unknown) {
-  try {
-    if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // almacenamiento no disponible (modo privado): las notificaciones no podrán gestionarse
-  }
-}
-
-/** Preferencias guardadas en este navegador (las de por defecto si aún no hay). */
-export function loadLocalPrefs(): NotificationPrefs {
-  return sanitizePrefs(read<Partial<NotificationPrefs>>(PREFS_KEY), DEFAULT_PREFS);
-}
-
-export function saveLocalPrefs(prefs: NotificationPrefs) {
-  write(PREFS_KEY, prefs);
-}
 
 export function pushSupport(): PushSupport {
   if (!VAPID_PUBLIC_KEY) return 'not-configured';
@@ -75,35 +37,26 @@ async function registration(): Promise<ServiceWorkerRegistration> {
   return navigator.serviceWorker.ready;
 }
 
-async function currentSubscription(): Promise<PushSubscription | null> {
+/** Suscripción actual de este dispositivo (null si no está activada). */
+export async function currentSubscription(): Promise<PushSubscription | null> {
   if (pushSupport() !== 'supported') return null;
   const reg = await navigator.serviceWorker.getRegistration('/');
   return reg ? reg.pushManager.getSubscription() : null;
 }
 
-/** ¿Recibe notificaciones este dispositivo? (suscrito en el navegador y registrado en el servidor) */
-export async function isEnabledHere(): Promise<boolean> {
-  const sub = await currentSubscription();
-  const stored = read<StoredDevice>(DEVICE_KEY);
-  return Boolean(sub && stored && stored.endpoint === sub.endpoint);
-}
-
-async function register(sub: PushSubscription, settings: DeviceSettings): Promise<boolean> {
+async function saveSubscription(sub: PushSubscription): Promise<boolean> {
   const res = await fetch('/api/push/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscription: sub.toJSON(), settings }),
+    body: JSON.stringify(sub.toJSON()),
   });
-  if (!res.ok) return false;
-  const { token } = (await res.json()) as { token: string };
-  write(DEVICE_KEY, { endpoint: sub.endpoint, token } satisfies StoredDevice);
-  return true;
+  return res.ok;
 }
 
 export type EnableResult = 'enabled' | 'denied' | 'error';
 
-/** Pide permiso, suscribe el dispositivo y lo registra con sus ajustes. */
-export async function enablePush(settings: DeviceSettings): Promise<EnableResult> {
+/** Pide permiso, suscribe el dispositivo y lo asocia a la cuenta. */
+export async function enablePush(): Promise<EnableResult> {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return 'denied';
   try {
@@ -111,55 +64,42 @@ export async function enablePush(settings: DeviceSettings): Promise<EnableResult
     const sub =
       (await reg.pushManager.getSubscription()) ??
       (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64UrlToBytes(VAPID_PUBLIC_KEY!) }));
-    return (await register(sub, settings)) ? 'enabled' : 'error';
+    return (await saveSubscription(sub)) ? 'enabled' : 'error';
   } catch (err) {
     console.warn('[push]', err);
     return 'error';
   }
 }
 
-/** Deja de recibir notificaciones en este dispositivo y borra sus datos del servidor. */
-export async function disablePush(): Promise<void> {
-  const stored = read<StoredDevice>(DEVICE_KEY);
-  if (stored) {
-    await fetch('/api/push/subscribe', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(stored),
-    }).catch(() => undefined);
-  }
-  write(DEVICE_KEY, null);
-  const sub = await currentSubscription();
-  await sub?.unsubscribe();
-}
-
 /**
- * Envía los ajustes actuales al servidor si este dispositivo tiene las notificaciones activadas.
- * Si el servidor lo había olvidado (p. ej. base de datos nueva), lo vuelve a registrar.
+ * Si este dispositivo ya tenía las notificaciones activadas, lo vuelve a asociar a la cuenta actual
+ * (por ejemplo, tras iniciar sesión con otra cuenta).
  */
-export async function syncDevice(settings: DeviceSettings): Promise<void> {
-  const stored = read<StoredDevice>(DEVICE_KEY);
-  if (!stored) return;
-  const res = await fetch('/api/push/device', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...stored, settings }),
-  });
-  if (res.status === 404) {
-    const sub = await currentSubscription();
-    if (sub) await register(sub, settings);
-    else write(DEVICE_KEY, null);
-  }
+export async function refreshSubscription(): Promise<boolean> {
+  const sub = await currentSubscription();
+  if (!sub || Notification.permission !== 'granted') return false;
+  return saveSubscription(sub).catch(() => false);
 }
 
-/** Manda una notificación de prueba; si falla, devuelve el motivo que da el servidor. */
+/** Deja de recibir notificaciones en este dispositivo. */
+export async function disablePush(): Promise<void> {
+  const sub = await currentSubscription();
+  if (!sub) return;
+  await fetch('/api/push/subscribe', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint: sub.endpoint }),
+  }).catch(() => undefined);
+  await sub.unsubscribe();
+}
+
+/** Manda una notificación de prueba a este dispositivo; si falla, devuelve el motivo. */
 export async function sendTestPush(): Promise<{ ok: boolean; error?: string }> {
-  const stored = read<StoredDevice>(DEVICE_KEY);
-  if (!stored) return { ok: false, error: 'not-registered' };
+  const sub = await currentSubscription();
   const res = await fetch('/api/push/test', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(stored),
+    body: JSON.stringify({ endpoint: sub?.endpoint }),
   }).catch(() => null);
   if (res?.ok) return { ok: true };
   const body = (await res?.json().catch(() => null)) as { error?: string } | null;

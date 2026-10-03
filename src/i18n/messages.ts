@@ -92,9 +92,37 @@ const es = {
 
   'profile.followingHelp': 'Las notificaciones solo te avisarán de estas promociones.',
 
+  'login.title': 'Iniciar sesión',
+  'login.subtitle': 'Entra para ver noticias, storylines y el calendario, y recibir avisos de tus shows.',
+  'login.google': 'Continuar con Google',
+  'login.or': 'o con tu email',
+  'login.email': 'Email',
+  'login.emailPlaceholder': 'tu@email.com',
+  'login.sendEmail': 'Enviarme un código',
+  'login.checkEmail':
+    'Te hemos enviado un email a {email}. Pulsa el enlace que contiene o escribe aquí el código (si no llega, mira en spam).',
+  'login.code': 'Código',
+  'login.verify': 'Entrar',
+  'login.back': 'Usar otro email',
+  'login.errorSend': 'No se pudo enviar el email. Revisa la dirección e inténtalo de nuevo.',
+  'login.errorRate': 'Has pedido demasiados emails seguidos. Espera un minuto y vuelve a intentarlo.',
+  'login.errorCode': 'El código no es correcto o ha caducado.',
+  'login.errorExpired': 'El enlace ha caducado o ya se usó. Pide un código nuevo.',
+  'login.errorOtherBrowser':
+    'El enlace se abrió en otro navegador o app. Usa el código del email aquí, o abre el enlace en el mismo navegador donde lo pediste.',
+  'login.errorProvider': 'No se pudo iniciar sesión con Google. Inténtalo de nuevo.',
+  'login.notConfigured': 'El inicio de sesión aún no está configurado en el servidor.',
+
+  'account.title': 'Cuenta',
+  'account.signedInAs': 'Sesión iniciada como {email}',
+  'account.signOut': 'Cerrar sesión',
+  'account.syncLoading': 'Sincronizando…',
+  'account.syncSynced': 'Favoritos, ajustes y avisos sincronizados en todos tus dispositivos.',
+  'account.syncError': 'No se pudieron sincronizar los ajustes. Se reintentará al recargar la página.',
+
   'notif.title': 'Notificaciones',
-  'notif.deviceNote':
-    'Estas preferencias son de este dispositivo. Si quieres avisos en otro (por ejemplo, el ordenador), actívalos también allí.',
+  'notif.accountNote':
+    'Estas preferencias son de tu cuenta y valen para todos tus dispositivos. Para recibir avisos en otro (por ejemplo, el ordenador), actívalos también allí.',
   'notif.enable': 'Activar en este dispositivo',
   'notif.enabled': 'Activadas en este dispositivo.',
   'notif.disable': 'Desactivar',
@@ -245,9 +273,37 @@ const en: Messages = {
 
   'profile.followingHelp': 'Notifications will only cover these promotions.',
 
+  'login.title': 'Sign in',
+  'login.subtitle': 'Sign in to see news, storylines and the calendar, and get alerts for your shows.',
+  'login.google': 'Continue with Google',
+  'login.or': 'or with your email',
+  'login.email': 'Email',
+  'login.emailPlaceholder': 'you@email.com',
+  'login.sendEmail': 'Send me a code',
+  'login.checkEmail':
+    'We sent an email to {email}. Tap the link inside or type the code here (check your spam folder if it does not arrive).',
+  'login.code': 'Code',
+  'login.verify': 'Sign in',
+  'login.back': 'Use another email',
+  'login.errorSend': 'The email could not be sent. Check the address and try again.',
+  'login.errorRate': 'Too many emails requested in a row. Wait a minute and try again.',
+  'login.errorCode': 'The code is wrong or has expired.',
+  'login.errorExpired': 'The link has expired or was already used. Request a new code.',
+  'login.errorOtherBrowser':
+    'The link was opened in another browser or app. Use the code from the email here, or open the link in the same browser where you requested it.',
+  'login.errorProvider': 'Google sign-in failed. Please try again.',
+  'login.notConfigured': 'Sign-in is not set up on the server yet.',
+
+  'account.title': 'Account',
+  'account.signedInAs': 'Signed in as {email}',
+  'account.signOut': 'Sign out',
+  'account.syncLoading': 'Syncing…',
+  'account.syncSynced': 'Favorites, settings and alerts synced across your devices.',
+  'account.syncError': 'Settings could not be synced. It will retry when you reload the page.',
+
   'notif.title': 'Notifications',
-  'notif.deviceNote':
-    'These preferences belong to this device. If you also want alerts on another one (your computer, for example), turn them on there too.',
+  'notif.accountNote':
+    'These preferences belong to your account and apply to all your devices. To get alerts on another device (your computer, for example), turn them on there too.',
   'notif.enable': 'Turn on for this device',
   'notif.enabled': 'On for this device.',
   'notif.disable': 'Turn off',

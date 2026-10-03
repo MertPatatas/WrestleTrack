@@ -550,6 +550,92 @@ button {
   cursor: not-allowed;
 }
 
+/* ---------- Inicio de sesión ---------- */
+
+.main-bare {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.login {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) 16px calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 28px 24px;
+}
+.login-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.login-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 4px;
+  color: var(--silver);
+  font-size: 13px;
+}
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ivory);
+  font: inherit;
+  font-size: 16px; /* evita el zoom de iOS al escribir */
+}
+.input:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+.input--code {
+  font-family: ui-monospace, monospace;
+  font-size: 22px;
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+.button--block {
+  align-self: stretch;
+  width: 100%;
+}
+.button--google {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 18px;
+  background: #fff;
+  color: #1f1f1f;
+}
+
 /* ---------- Cuenta y notificaciones ---------- */
 
 .text-error {
