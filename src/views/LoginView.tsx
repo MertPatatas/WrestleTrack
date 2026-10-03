@@ -6,8 +6,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Wordmark } from '../components/Wordmark';
 import { useT } from '../i18n/SettingsProvider';
 import type { MessageKey } from '../i18n/messages';
-import { getSupabase } from '../lib/supabase/client';
-import { supabaseConfigured } from '../lib/supabase/env';
+import { getSupabase, supabaseReady } from '../lib/supabase/client';
 
 type Step = 'start' | 'code';
 
@@ -36,7 +35,7 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
 
   // Si se inicia sesión en otra pestaña (por ejemplo, pulsando el enlace del email), se continúa aquí
   useEffect(() => {
-    if (!supabaseConfigured()) return;
+    if (!supabaseReady()) return;
     const { data } = getSupabase().auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') done();
     });
@@ -92,7 +91,7 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
         <h1 className="login-title">{t('login.title')}</h1>
         <p className="card-text">{t('login.subtitle')}</p>
 
-        {!supabaseConfigured() ? <p className="small text-error">{t('login.notConfigured')}</p> : null}
+        {!supabaseReady() ? <p className="small text-error">{t('login.notConfigured')}</p> : null}
 
         {step === 'start' ? (
           <>

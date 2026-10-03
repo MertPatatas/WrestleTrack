@@ -5,8 +5,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { refreshSubscription } from '../lib/notifications/client';
 import type { NotificationPrefs } from '../lib/notifications/prefs';
 import type { ProfileDTO } from '../lib/server/profile';
-import { getSupabase } from '../lib/supabase/client';
-import { supabaseConfigured } from '../lib/supabase/env';
+import { getSupabase, initSupabase, supabaseReady } from '../lib/supabase/client';
+import type { SupabasePublicConfig } from '../lib/supabase/env';
 import { SETTINGS_COOKIE, localeFor, serializeSettings, type Lang, type UserSettings } from './config';
 import { translate, type MessageKey } from './messages';
 
@@ -62,13 +62,18 @@ export function SettingsProvider({
   initialSettings,
   deviceLang,
   deviceLocale,
+  supabase: supabaseConfig,
   children,
 }: {
   initialSettings: UserSettings;
   deviceLang: Lang;
   deviceLocale: string;
+  /** Datos públicos de Supabase que lee el servidor (null si no está configurado). */
+  supabase: SupabasePublicConfig | null;
   children: ReactNode;
 }) {
+  // Antes de que ningún componente use Supabase
+  initSupabase(supabaseConfig);
   const router = useRouter();
   const [settings, setSettings] = useState(initialSettings);
   const [deviceTimeZone, setDeviceTimeZone] = useState<string | null>(null);
@@ -84,7 +89,7 @@ export function SettingsProvider({
 
   // Sesión de Supabase (y sus cambios: inicio o cierre de sesión en esta u otra pestaña)
   useEffect(() => {
-    if (!supabaseConfigured()) return;
+    if (!supabaseReady()) return;
     const supabase = getSupabase();
     const toUser = (u: { id: string; email?: string | null } | null | undefined): SessionUser | null =>
       u ? { id: u.id, email: u.email ?? null } : null;
@@ -184,7 +189,7 @@ export function SettingsProvider({
   );
 
   const signOut = useCallback(async () => {
-    await getSupabase().auth.signOut();
+    if (supabaseReady()) await getSupabase().auth.signOut();
     setUser(null);
     router.replace('/login');
     router.refresh();

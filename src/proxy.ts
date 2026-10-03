@@ -1,11 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { SUPABASE_KEY, SUPABASE_URL, supabaseConfigured } from './lib/supabase/env';
+import { supabaseEnv } from './lib/supabase/env';
 
 // Rutas que se pueden usar sin iniciar sesión
 const PUBLIC_PATHS = [
   /^\/login(\/|$)/,
   /^\/(privacidad|condiciones)$/, // textos legales (Google los revisa sin sesión)
+  /^\/google[0-9a-z]+\.html$/, // archivo de verificación de Google Search Console
   /^\/auth\//, // vuelta del inicio de sesión (Google y enlace del email)
   /^\/api\/push\/dispatch$/, // la llama Upstash QStash (con firma propia)
   /^\/api\/schedule$/, // datos públicos; los usa la revisión de avisos
@@ -14,9 +15,10 @@ const PUBLIC_PATHS = [
 // Supabase: renueva la sesión en cada petición y exige iniciar sesión para usar la app.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
-  if (!supabaseConfigured()) return response; // sin Supabase configurado, la app funciona como antes
+  const cfg = supabaseEnv();
+  if (!cfg) return response; // sin Supabase configurado, la app funciona sin inicio de sesión
 
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+  const supabase = createServerClient(cfg.url, cfg.key, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

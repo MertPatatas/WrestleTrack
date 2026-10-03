@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
   if (!code) return fail('missing');
 
   const supabase = await createClient();
+  if (!supabase) return fail('missing');
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     // Lo más habitual: el enlace del email se abrió en otro navegador o app

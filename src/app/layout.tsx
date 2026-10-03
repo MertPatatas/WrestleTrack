@@ -5,6 +5,7 @@ import { AppShell } from '../components/AppShell';
 import { ServiceWorkerRegister } from '../components/ServiceWorkerRegister';
 import { SettingsProvider } from '../i18n/SettingsProvider';
 import { getRequestI18n } from '../i18n/server';
+import { supabaseEnv } from '../lib/supabase/env';
 import './globals.css';
 
 const barlow = Barlow({
@@ -46,7 +47,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={lang} className={`${barlow.variable} ${barlowCondensed.variable}`}>
       <body>
-        <SettingsProvider initialSettings={settings} deviceLang={device.lang} deviceLocale={device.locale}>
+        <SettingsProvider
+          initialSettings={settings}
+          deviceLang={device.lang}
+          deviceLocale={device.locale}
+          supabase={supabaseEnv()}
+        >
           <AppShell>{children}</AppShell>
         </SettingsProvider>
         <ServiceWorkerRegister />

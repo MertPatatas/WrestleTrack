@@ -2,7 +2,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { db } from '../../../lib/server/db';
 import { errorResponse, requireUser } from '../../../lib/server/profile';
-import { SUPABASE_URL } from '../../../lib/supabase/env';
+import { supabaseEnv } from '../../../lib/supabase/env';
 import { createClient } from '../../../lib/supabase/server';
 
 export const runtime = 'nodejs';
@@ -21,8 +21,9 @@ export async function DELETE() {
 
     // La cuenta de Supabase Auth se borra con la clave de servicio (solo en el servidor)
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
-    if (serviceKey) {
-      const admin = createAdminClient(SUPABASE_URL, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const cfg = supabaseEnv();
+    if (serviceKey && cfg) {
+      const admin = createAdminClient(cfg.url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
       const { error } = await admin.auth.admin.deleteUser(user.userId);
       if (error) throw error;
     } else {
@@ -32,7 +33,7 @@ export async function DELETE() {
 
     // Cierra la sesión en este navegador
     const supabase = await createClient();
-    await supabase.auth.signOut().catch(() => undefined);
+    await supabase?.auth.signOut().catch(() => undefined);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return errorResponse(err);

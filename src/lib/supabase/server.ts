@@ -1,12 +1,14 @@
 import 'server-only';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { SUPABASE_KEY, SUPABASE_URL } from './env';
+import { supabaseEnv } from './env';
 
-/** Cliente de Supabase para el servidor, con la sesión del usuario (cookies). */
+/** Cliente de Supabase para el servidor, con la sesión del usuario (cookies). null si no está configurado. */
 export async function createClient() {
+  const cfg = supabaseEnv();
+  if (!cfg) return null;
   const cookieStore = await cookies();
-  return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+  return createServerClient(cfg.url, cfg.key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -25,6 +27,7 @@ export async function createClient() {
 /** Id del usuario con sesión iniciada (verificado), o null. */
 export async function currentUserId(): Promise<string | null> {
   const supabase = await createClient();
+  if (!supabase) return null;
   const { data } = await supabase.auth.getClaims();
   return typeof data?.claims?.sub === 'string' ? data.claims.sub : null;
 }
