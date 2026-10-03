@@ -1,5 +1,6 @@
 import 'server-only';
 import postgres from 'postgres';
+import { postgresUrl } from '../supabase/env';
 
 // Base de datos Postgres de Supabase. La integración de Vercel crea POSTGRES_URL (conexión
 // por el "pooler", la adecuada para funciones serverless).
@@ -12,7 +13,8 @@ let schemaReady: Promise<void> | null = null;
 
 export class NotConfiguredError extends Error {}
 
-const connectionString = () => process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+// Acepta el prefijo que añada la integración (p. ej. "session_POSTGRES_URL")
+const connectionString = () => postgresUrl();
 
 export function dbConfigured(): boolean {
   return Boolean(connectionString());

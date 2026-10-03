@@ -2,7 +2,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { db } from '../../../lib/server/db';
 import { errorResponse, requireUser } from '../../../lib/server/profile';
-import { supabaseEnv } from '../../../lib/supabase/env';
+import { supabaseEnv, supabaseServiceKey } from '../../../lib/supabase/env';
 import { createClient } from '../../../lib/supabase/server';
 
 export const runtime = 'nodejs';
@@ -20,7 +20,7 @@ export async function DELETE() {
     await sql.query('delete from app.profiles where user_id = $1', [user.userId]);
 
     // La cuenta de Supabase Auth se borra con la clave de servicio (solo en el servidor)
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+    const serviceKey = supabaseServiceKey();
     const cfg = supabaseEnv();
     if (serviceKey && cfg) {
       const admin = createAdminClient(cfg.url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
