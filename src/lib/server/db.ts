@@ -24,11 +24,31 @@ export interface Db {
   query<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<T[]>;
 }
 
+/**
+ * La dirección de la integración trae parámetros como "?sslmode=require&supa=base-pooler.x".
+ * La librería postgres envía cualquier parámetro desconocido al servidor como ajuste de sesión
+ * y Postgres rechaza la conexión, así que se quitan todos y el SSL se configura aparte.
+ */
+function cleanConnection(raw: string): { url: string; ssl: 'require' | false } {
+  try {
+    const u = new URL(raw);
+    const mode = u.searchParams.get('sslmode');
+    u.search = '';
+    const local = ['localhost', '127.0.0.1'].includes(u.hostname);
+    return { url: u.toString(), ssl: mode === 'disable' || (local && !mode) ? false : 'require' };
+  } catch {
+    return { url: raw, ssl: 'require' };
+  }
+}
+
 function sql(): postgres.Sql {
-  const url = connectionString();
-  if (!url) throw new NotConfiguredError('Falta POSTGRES_URL (base de datos no configurada)');
-  // prepare: false es obligatorio con el pooler en modo transacción
-  client ??= postgres(url, { prepare: false, max: 3, idle_timeout: 20, connect_timeout: 10 });
+  const raw = connectionString();
+  if (!raw) throw new NotConfiguredError('Falta POSTGRES_URL (base de datos no configurada)');
+  if (!client) {
+    const { url, ssl } = cleanConnection(raw);
+    // prepare: false es obligatorio con el pooler en modo transacción
+    client = postgres(url, { ssl, prepare: false, max: 3, idle_timeout: 20, connect_timeout: 10 });
+  }
   return client;
 }
 

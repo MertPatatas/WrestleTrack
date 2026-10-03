@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   /^\/auth\//, // vuelta del inicio de sesión (Google y enlace del email)
   /^\/api\/push\/dispatch$/, // la llama Upstash QStash (con firma propia)
   /^\/api\/schedule$/, // datos públicos; los usa la revisión de avisos
+  /^\/api\/health$/, // diagnóstico (protegido con CRON_SECRET)
 ];
 
 // Supabase: renueva la sesión en cada petición y exige iniciar sesión para usar la app.
