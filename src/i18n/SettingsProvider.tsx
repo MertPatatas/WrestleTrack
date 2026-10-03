@@ -35,6 +35,8 @@ interface SettingsContextValue {
   signOut: () => Promise<void>;
   /** Sincronización de ajustes con la cuenta. */
   sync: SyncState;
+  /** Motivo del último fallo de sincronización (para mostrarlo y poder diagnosticar). */
+  syncError: string | null;
   /** Preferencias de notificaciones de la cuenta (null hasta cargarlas). */
   notifications: NotificationPrefs | null;
   updateNotifications: (patch: Partial<NotificationPrefs>) => void;
@@ -48,13 +50,19 @@ function writeCookie(settings: UserSettings) {
   document.cookie = `${SETTINGS_COOKIE}=${serializeSettings(settings)}; Path=/; Max-Age=${ONE_YEAR}; SameSite=Lax`;
 }
 
+/** Error de una petición con el motivo que da el servidor ("PUT 500: …"). */
+async function requestError(method: string, res: Response): Promise<Error> {
+  const body = (await res.json().catch(() => null)) as { error?: string } | null;
+  return new Error(`${method} ${res.status}${body?.error ? `: ${body.error}` : ''}`);
+}
+
 async function putProfile(body: object): Promise<ProfileDTO | null> {
   const res = await fetch('/api/profile', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw await requestError('PUT', res);
   return ((await res.json()) as { profile: ProfileDTO | null }).profile;
 }
 
@@ -81,6 +89,7 @@ export function SettingsProvider({
   const [sync, setSync] = useState<SyncState>('local');
   const [notifications, setNotifications] = useState<NotificationPrefs | null>(null);
   const syncedUser = useRef<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   // La zona del dispositivo solo se conoce en el navegador
   useEffect(() => {
@@ -137,8 +146,8 @@ export function SettingsProvider({
     setSync('loading');
     (async () => {
       try {
-        const res = await fetch('/api/profile');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch('/api/profile', { cache: 'no-store' });
+        if (!res.ok) throw await requestError('GET', res);
         const { profile } = (await res.json()) as { profile: ProfileDTO | null };
         const saved = profile
           ? await putProfile({ device }) // solo actualiza los datos del dispositivo
@@ -147,6 +156,7 @@ export function SettingsProvider({
         finished = true;
         if (profile) applyLocal(saved.settings, settings);
         setNotifications(saved.notifications);
+        setSyncError(null);
         setSync('synced');
         // Si este dispositivo ya recibía avisos, queda asociado a esta cuenta
         void refreshSubscription();
@@ -154,6 +164,7 @@ export function SettingsProvider({
         console.warn('[perfil] no se pudo sincronizar:', err);
         if (!cancelled) {
           syncedUser.current = null; // se reintenta en la próxima carga
+          setSyncError(err instanceof Error ? err.message : String(err));
           setSync('error');
         }
       }
@@ -215,10 +226,11 @@ export function SettingsProvider({
       user,
       signOut,
       sync,
+      syncError,
       notifications,
       updateNotifications,
     }),
-    [settings, update, lang, deviceLang, deviceLocale, deviceTimeZone, user, signOut, sync, notifications, updateNotifications],
+    [settings, update, lang, deviceLang, deviceLocale, deviceTimeZone, user, signOut, sync, syncError, notifications, updateNotifications],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

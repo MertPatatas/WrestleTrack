@@ -7,7 +7,7 @@ import { currentSubscription } from '../../lib/notifications/client';
 
 // Cuenta con la que se ha iniciado sesión: cerrar sesión o eliminarla
 export function AccountCard() {
-  const { t, user, sync, signOut } = useSettings();
+  const { t, user, sync, syncError, signOut } = useSettings();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(false);
 
@@ -39,6 +39,7 @@ export function AccountCard() {
                 : sync === 'error'
                   ? t('account.syncError')
                   : t('account.syncSynced')}
+              {sync === 'error' && syncError ? <span className="error-detail">{syncError}</span> : null}
             </p>
             <div className="button-row">
               <button type="button" className="button button--ghost" onClick={() => void signOut()} disabled={deleting}>

@@ -45,5 +45,7 @@ export function errorResponse(err: unknown): NextResponse {
     return NextResponse.json({ error: 'Base de datos no configurada' }, { status: 503 });
   }
   console.error('[api]', err);
-  return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
+  // Motivo resumido para poder diagnosticar (sin direcciones de conexión, que llevan la contraseña)
+  const reason = (err instanceof Error ? err.message : String(err)).replace(/postgres(ql)?:\/\/\S+/g, '[url]').slice(0, 200);
+  return NextResponse.json({ error: `Error del servidor (${reason})` }, { status: 500 });
 }
