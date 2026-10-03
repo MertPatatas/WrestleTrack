@@ -191,9 +191,9 @@ export function SettingsProvider({
   const signOut = useCallback(async () => {
     if (supabaseReady()) await getSupabase().auth.signOut();
     setUser(null);
-    router.replace('/login');
-    router.refresh();
-  }, [router]);
+    // Carga completa: que no se reutilice ninguna página guardada de cuando había sesión
+    window.location.replace('/login');
+  }, []);
 
   const value = useMemo<SettingsContextValue>(
     () => ({

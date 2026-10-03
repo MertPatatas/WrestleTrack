@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Wordmark } from '../components/Wordmark';
 import { useT } from '../i18n/SettingsProvider';
 import type { MessageKey } from '../i18n/messages';
@@ -20,7 +19,6 @@ const ERROR_KEYS: Record<string, MessageKey> = {
 // Pantalla de inicio de sesión: Google o email (enlace o código de un solo uso)
 export function LoginView({ next, error }: { next: string; error?: string }) {
   const t = useT();
-  const router = useRouter();
   const [step, setStep] = useState<Step>('start');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -30,9 +28,14 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
   const [detail, setDetail] = useState<string | null>(null);
 
   const callbackUrl = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  // Tras iniciar sesión se carga la página de destino de cero (no con la navegación interna de Next,
+  // que podría reutilizar la respuesta guardada de cuando no había sesión). Solo una vez: el botón
+  // y el aviso de "sesión iniciada" llegan casi a la vez.
+  const leaving = useRef(false);
   const done = () => {
-    router.replace(next);
-    router.refresh();
+    if (leaving.current) return;
+    leaving.current = true;
+    window.location.replace(next);
   };
 
   // Si se inicia sesión en otra pestaña (por ejemplo, pulsando el enlace del email), se continúa aquí
