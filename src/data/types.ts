@@ -50,6 +50,7 @@ export interface Show {
   timeTbd?: boolean; // fecha confirmada pero hora aún sin anunciar
   timeApprox?: boolean; // hora habitual de la promoción, aún no confirmada para este evento
   url?: string; // página con más información
+  tapedOn?: string; // 'YYYY-MM-DD' del evento en que se grabó, si se emite otro día
   auto?: boolean; // detectado automáticamente (Wikipedia)
   venue?: string; // recinto y/o ciudad
   broadcast?: string; // cadena o plataforma

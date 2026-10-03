@@ -141,6 +141,17 @@ export function buildSchedule(
     );
   }
 
+  // Shows semanales grabados en un evento y emitidos días después (p. ej. Collision: Grand Slam
+  // France, grabado el martes en París y emitido el sábado): se indica cuándo se grabó
+  for (const e of [...specialEvents, ...autoEvents]) {
+    const name = normalizeName(e.name);
+    for (const s of shows) {
+      if (s.kind !== 'weekly' || s.promotion !== e.promotion || s.tapedOn) continue;
+      const after = daysBetween(e.date, s.eventDate);
+      if (after >= 1 && after <= 7 && normalizeName(s.name).includes(name)) s.tapedOn = e.date;
+    }
+  }
+
   // Primero las correcciones manuales, luego las fuentes en orden de fiabilidad;
   // un evento repetido se descarta, pero aporta su enlace si el que se queda no tiene.
   for (const e of [...specialEvents, ...autoEvents]) {

@@ -69,6 +69,9 @@ export function ShowRow({
         ) : null}
         {details ? <p className="muted small show-details">{details}</p> : null}
         {show.note ? <p className="small show-note">{show.note}</p> : null}
+        {show.tapedOn ? (
+          <p className="muted small">{t('shows.taped', { date: fmt.shortDate(show.tapedOn) })}</p>
+        ) : null}
       </div>
       <div className="show-side">
         <PromotionBadge id={show.promotion} />

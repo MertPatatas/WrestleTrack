@@ -36,6 +36,13 @@ export function createFormatter({ locale, timeZone, t }: { locale: string; timeZ
       };
     },
 
+    /** "6 oct" / "Oct 6" de una fecha 'YYYY-MM-DD' (sin moverla de zona). */
+    shortDate(key: string): string {
+      return dayDate(key)
+        .toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+        .replace('.', '');
+    },
+
     /** Día 'YYYY-MM-DD' en la zona del usuario (para agrupar shows por día). */
     dayKey(value: string | number): string {
       return utcToZoned(typeof value === 'number' ? value : Date.parse(value), timeZone).date;

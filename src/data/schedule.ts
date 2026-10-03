@@ -108,4 +108,7 @@ export const tvmazeSpecials: TvmazeSpecialSource[] = [
 
 // Correcciones manuales opcionales. Tienen prioridad sobre las fuentes automáticas.
 export const specialEvents: SpecialEvent[] = [];
-export const exceptions: ShowException[] = [];
+export const exceptions: ShowException[] = [
+  // TVmaze lo tiene el miércoles 7, pero se emite el martes 6 (MLB en TBS). Fuentes: HBO Max y F4W.
+  { show: 'dynamite', date: '2026-10-07', newDate: '2026-10-06' },
+];
