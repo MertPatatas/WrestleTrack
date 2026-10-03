@@ -26,6 +26,8 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<MessageKey | null>(error ? (ERROR_KEYS[error] ?? 'login.errorExpired') : null);
+  // Motivo técnico que devuelve Supabase (para poder diagnosticar problemas de envío)
+  const [detail, setDetail] = useState<string | null>(null);
 
   const callbackUrl = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
   const done = () => {
@@ -60,6 +62,7 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
     e.preventDefault();
     setBusy(true);
     setMessage(null);
+    setDetail(null);
     const { error: err } = await getSupabase().auth.signInWithOtp({
       email: email.trim(),
       options: { emailRedirectTo: callbackUrl(), shouldCreateUser: true },
@@ -67,6 +70,7 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
     setBusy(false);
     if (err) {
       setMessage(/rate|seconds|too many/i.test(err.message) ? 'login.errorRate' : 'login.errorSend');
+      setDetail(err.message);
       return;
     }
     setStep('code');
@@ -165,6 +169,7 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
         {message ? (
           <p className="small text-error setting-help" role="alert">
             {t(message)}
+            {detail ? <span className="error-detail">{detail}</span> : null}
           </p>
         ) : null}
 
