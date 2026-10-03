@@ -117,18 +117,22 @@ export function SettingsProvider({
 
   // Al iniciar sesión: la primera vez se suben los ajustes de este navegador a la cuenta;
   // las siguientes, se traen los de la cuenta (así todos los dispositivos quedan iguales).
+  // Depende del id (no del objeto user): Supabase crea un objeto nuevo en cada aviso de sesión
+  // (carga, renovación del token...) y eso no debe cancelar ni repetir la sincronización.
+  const userId = user?.id ?? null;
   useEffect(() => {
     if (!deviceTimeZone) return;
-    if (!user) {
+    if (!userId) {
       syncedUser.current = null;
       setSync('local');
       setNotifications(null);
       return;
     }
-    if (syncedUser.current === user.id) return;
-    syncedUser.current = user.id;
+    if (syncedUser.current === userId) return;
+    syncedUser.current = userId;
 
     let cancelled = false;
+    let finished = false;
     const device = { timeZone: deviceTimeZone, language: deviceLang, locale: deviceLocale };
     setSync('loading');
     (async () => {
@@ -140,6 +144,7 @@ export function SettingsProvider({
           ? await putProfile({ device }) // solo actualiza los datos del dispositivo
           : await putProfile({ settings, device });
         if (cancelled || !saved) return;
+        finished = true;
         if (profile) applyLocal(saved.settings, settings);
         setNotifications(saved.notifications);
         setSync('synced');
@@ -155,10 +160,12 @@ export function SettingsProvider({
     })();
     return () => {
       cancelled = true;
+      // Si se interrumpe a medias, la siguiente ejecución vuelve a sincronizar
+      if (!finished) syncedUser.current = null;
     };
     // settings se lee solo al iniciar sesión; no debe relanzar la sincronización
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, deviceTimeZone, deviceLang, deviceLocale, applyLocal]);
+  }, [userId, deviceTimeZone, deviceLang, deviceLocale, applyLocal]);
 
   const update = useCallback(
     (patch: Partial<UserSettings>) => {
