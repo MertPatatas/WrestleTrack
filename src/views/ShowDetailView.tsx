@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { PromotionBadge } from '../components/PromotionBadge';
+import { PromoLogo } from '../components/PromoLogo';
 import { REGIONS, detectRegion, whereToWatch, type Region } from '../data/broadcast';
 import type { Show } from '../data/types';
 import { useAppData } from '../data/useAppData';
@@ -28,7 +28,8 @@ function useCard(show: Show | undefined, ended: boolean): CardState | null {
   useEffect(() => {
     if (!show || ended) return;
     const params = new URLSearchParams({ id: show.id, kind: show.kind, promotion: show.promotion, date: show.eventDate });
-    if (show.url) params.set('url', show.url);
+    // La API solo necesita (y solo acepta) el enlace cuando la cartelera sale de Wikipedia
+    if (show.url?.startsWith('https://en.wikipedia.org/wiki/')) params.set('url', show.url);
     let alive = true;
     setState({ status: 'loading' });
     fetch(`/api/card?${params}`)
@@ -114,15 +115,18 @@ export function ShowDetailView({ id }: { id: string }) {
         ← {t('detail.back')}
       </Link>
 
-      <header className="detail-header">
-        <div className="card-meta">
-          <PromotionBadge id={show.promotion} />
-          {special ? <span className="show-star">★ {t('shows.special')}</span> : null}
+      <header className={`hero hero--static brand-${show.promotion}`}>
+        <div className="hero-bg" aria-hidden="true" />
+        <div className="hero-content">
+          {special ? <p className="hero-kicker">★ {t('shows.special')}</p> : null}
+          <div className="hero-logo">
+            <PromoLogo id={show.promotion} height={40} />
+          </div>
+          <h1 className="hero-title">{name}</h1>
+          {status?.text || ended ? (
+            <p className={status?.live ? 'hero-live' : 'hero-meta'}>{ended ? t('detail.finished') : status?.text}</p>
+          ) : null}
         </div>
-        <h1 className="page-title">{name}</h1>
-        {status?.text || ended ? (
-          <p className={status?.live ? 'show-live' : 'muted'}>{ended ? t('detail.finished') : status?.text}</p>
-        ) : null}
       </header>
 
       <section className="card detail-facts">

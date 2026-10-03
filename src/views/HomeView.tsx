@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { NewsCard } from '../components/NewsCard';
 import { NewsSkeleton } from '../components/NewsSkeleton';
+import { NextEventHero } from '../components/NextEventHero';
 import { PageHeader } from '../components/PageHeader';
 import { SampleNotice } from '../components/SampleNotice';
 import { ShowRow } from '../components/ShowRow';
@@ -29,12 +31,20 @@ export function HomeView() {
   const news = useNews();
   const fmt = useFormat();
   const t = useT();
-  const now = Date.now();
+  // Se refresca cada minuto para la cuenta atrás
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
   const upcoming = data ? data.shows.filter((s) => new Date(s.endsAt).getTime() > now).slice(0, 3) : [];
+  // El próximo PPV/PLE que aún no ha terminado, para la tarjeta destacada
+  const nextBig = data?.shows.find((s) => s.kind !== 'weekly' && new Date(s.endsAt).getTime() > now);
 
   return (
     <>
       <PageHeader title={t('home.title')} />
+      {nextBig && fmt ? <NextEventHero show={nextBig} fmt={fmt} now={now} /> : null}
       <SampleNotice text={t('home.sample')} />
 
       {/* En escritorio los próximos shows viven en la columna lateral */}

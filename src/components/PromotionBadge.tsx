@@ -1,11 +1,15 @@
 'use client';
 
-import { promotions } from '../data/mock';
 import type { PromotionId } from '../data/types';
 import { useT } from '../i18n/SettingsProvider';
+import { PromoLogo } from './PromoLogo';
 
-export function PromotionBadge({ id }: { id: PromotionId }) {
+// Etiqueta de la promoción con su logo y su color
+export function PromotionBadge({ id, size = 14 }: { id: PromotionId; size?: number }) {
   const t = useT();
-  const label = id === 'other' ? t('promo.general') : (promotions.find((p) => p.id === id)?.short ?? id);
-  return <span className="badge">{label}</span>;
+  return (
+    <span className={`badge badge--promo brand-${id}`}>
+      <PromoLogo id={id} height={size} label={id === 'other' ? t('promo.general') : undefined} />
+    </span>
+  );
 }

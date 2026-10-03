@@ -15,4 +15,4 @@
 ## Notas
 - Noticias: titular + extracto corto + enlace a la fuente, sin copiar artículos completos.
 - Resúmenes con IA: indicarlo y citar fuentes.
-- Evitar logos oficiales y fotos de luchadores sin licencia; usar etiquetas de texto.
+- Logos: solo los que están en dominio público en Wikimedia Commons (WWE, AEW, AAA en `public/logos`); CMLL y NJPW con rótulo tipográfico. Nada de fotos de luchadores sin licencia. Foto de fondo del ring: CC0 (Wikimedia Commons, Miguel Angel Omaña Rojas).

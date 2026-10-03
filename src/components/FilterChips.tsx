@@ -3,6 +3,7 @@
 import { promotions } from '../data/mock';
 import type { PromotionId } from '../data/types';
 import { useT } from '../i18n/SettingsProvider';
+import { PromoLogo } from './PromoLogo';
 
 export type Filter = PromotionId | 'all';
 
@@ -28,11 +29,12 @@ export function FilterChips({
         <button
           key={o.id}
           type="button"
-          className="chip"
+          className={`chip${o.id !== 'all' && o.id !== 'other' ? ` chip--logo brand-${o.id}` : ''}`}
           aria-pressed={o.id === value}
+          aria-label={o.label}
           onClick={() => onChange(o.id)}
         >
-          {o.label}
+          {o.id === 'all' || o.id === 'other' ? o.label : <PromoLogo id={o.id} height={16} label={o.label} />}
         </button>
       ))}
     </div>

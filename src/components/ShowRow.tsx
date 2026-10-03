@@ -49,7 +49,7 @@ export function ShowRow({
   return (
     <Link
       href={`/shows/${encodeURIComponent(show.id)}`}
-      className={`show-row show-row--link${special ? ' show-row--special' : ''}${status.live ? ' show-row--live' : ''}`}
+      className={`show-row show-row--link brand-${show.promotion}${special ? ' show-row--special' : ''}${status.live ? ' show-row--live' : ''}`}
     >
       {left}
       <div className="show-info">

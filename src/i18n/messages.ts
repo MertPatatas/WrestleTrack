@@ -33,6 +33,11 @@ const es = {
   'time.tomorrow': 'Mañana',
   'time.yesterday': 'Ayer',
 
+  'home.nextBig': 'Próximo gran evento',
+  'home.seeCard': 'Cartelera y dónde verlo',
+  'countdown.days': 'días',
+  'countdown.hours': 'horas',
+  'countdown.minutes': 'min',
   'home.title': 'Inicio',
   'home.upcoming': 'Próximos shows',
   'home.latestNews': 'Últimas noticias',
@@ -255,6 +260,11 @@ const en: Messages = {
   'time.tomorrow': 'Tomorrow',
   'time.yesterday': 'Yesterday',
 
+  'home.nextBig': 'Next big event',
+  'home.seeCard': 'Card & where to watch',
+  'countdown.days': 'days',
+  'countdown.hours': 'hours',
+  'countdown.minutes': 'min',
   'home.title': 'Home',
   'home.upcoming': 'Upcoming shows',
   'home.latestNews': 'Latest news',
