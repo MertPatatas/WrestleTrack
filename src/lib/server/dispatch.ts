@@ -3,7 +3,7 @@ import type { Show } from '../../data/types';
 import type { Lang } from '../../i18n/config';
 import { translate, type MessageKey } from '../../i18n/messages';
 import type { DeviceSettings } from '../notifications/device';
-import type { NotificationPrefs } from '../notifications/prefs';
+import { LEAD_OPTIONS, type NotificationPrefs } from '../notifications/prefs';
 import { buildSchedule } from '../schedule/build';
 import type { ScheduleResponse } from '../schedule/load';
 import { utcToZoned } from '../schedule/time';
@@ -13,8 +13,9 @@ import { sendToSubscriptions, type PushPayload } from './push';
 
 // Se ejecuta cada 5 minutos (Upstash QStash → /api/push/dispatch).
 // Margen de tolerancia: si una ejecución se retrasa o falla, la siguiente aún envía lo pendiente.
-const WINDOW_MS = 15 * 60_000;
-const DIGEST_WINDOW_MIN = 15;
+const WINDOW_MS = 10 * 60_000;
+// Revisión horaria (anuncios y resúmenes): los primeros minutos de cada hora UTC
+const HOURLY_WINDOW_MIN = 10;
 const PROMO_NAMES: Record<string, string> = { wwe: 'WWE', aew: 'AEW', cmll: 'CMLL', aaa: 'AAA', njpw: 'NJPW', other: '' };
 
 function wants(show: Show, s: DeviceSettings, prefs: NotificationPrefs): boolean {
@@ -100,32 +101,54 @@ export interface DispatchResult {
   devices: number;
   notifications: number;
   newEvents: number;
+  skipped?: boolean; // no tocaba nada: no se ha despertado la base de datos
+}
+
+/** ¿Algún show está en el momento de alguno de los recordatorios posibles? */
+function reminderDue(shows: Show[], now: number): boolean {
+  return shows.some((s) => {
+    if (s.timeTbd) return false;
+    const start = new Date(s.startsAt).getTime();
+    return LEAD_OPTIONS.some((lead) => {
+      const at = start - lead * 60_000;
+      return at <= now && at > now - WINDOW_MS;
+    });
+  });
 }
 
 export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events'>, now = Date.now()): Promise<DispatchResult> {
-  const sql = await db();
   const shows = buildSchedule(now, { pastDays: 1, futureDays: 8, episodes: data.episodes, autoEvents: data.events });
 
-  // ---- Eventos recién anunciados ----
-  // Todo lo anunciado (no solo los próximos días): si no, un evento ya conocido parecería
-  // nuevo al acercarse, y uno anunciado para dentro de meses no se detectaría
-  const upcomingSpecials = buildSchedule(now, {
-    pastDays: 0,
-    futureDays: 400,
-    episodes: data.episodes,
-    autoEvents: data.events,
-  }).filter((s) => s.kind !== 'weekly' && new Date(s.startsAt).getTime() > now);
-  const keys = [...new Set(upcomingSpecials.map(eventKey))];
-  const firstRun = ((await sql.query('select count(*)::int as n from seen_events')) as { n: number }[])[0].n === 0;
-  const inserted = keys.length
-    ? ((await sql.query(
-        'insert into seen_events (key) select unnest($1::text[]) on conflict do nothing returning key',
-        [keys],
-      )) as { key: string }[])
-    : [];
-  // En la primera ejecución solo se registran: no son anuncios nuevos
-  const newKeys = new Set(firstRun ? [] : inserted.map((r) => r.key));
-  const newEvents = upcomingSpecials.filter((s) => newKeys.has(eventKey(s)));
+  // La base de datos gratuita (Neon) se duerme tras 5 min sin uso y tiene horas de cómputo limitadas.
+  // Solo se despierta si toca algo: un recordatorio, o la revisión horaria de anuncios y resúmenes.
+  const hourly = new Date(now).getUTCMinutes() < HOURLY_WINDOW_MIN;
+  if (!hourly && !reminderDue(shows, now)) return { devices: 0, notifications: 0, newEvents: 0, skipped: true };
+
+  const sql = await db();
+
+  // ---- Eventos recién anunciados (en la revisión horaria) ----
+  let newEvents: Show[] = [];
+  if (hourly) {
+    // Todo lo anunciado (no solo los próximos días): si no, un evento ya conocido parecería
+    // nuevo al acercarse, y uno anunciado para dentro de meses no se detectaría
+    const upcomingSpecials = buildSchedule(now, {
+      pastDays: 0,
+      futureDays: 400,
+      episodes: data.episodes,
+      autoEvents: data.events,
+    }).filter((s) => s.kind !== 'weekly' && new Date(s.startsAt).getTime() > now);
+    const keys = [...new Set(upcomingSpecials.map(eventKey))];
+    const firstRun = ((await sql.query('select count(*)::int as n from seen_events')) as { n: number }[])[0].n === 0;
+    const inserted = keys.length
+      ? ((await sql.query(
+          'insert into seen_events (key) select unnest($1::text[]) on conflict do nothing returning key',
+          [keys],
+        )) as { key: string }[])
+      : [];
+    // En la primera ejecución solo se registran: no son anuncios nuevos
+    const newKeys = new Set(firstRun ? [] : inserted.map((r) => r.key));
+    newEvents = upcomingSpecials.filter((s) => newKeys.has(eventKey(s)));
+  }
 
   // ---- Dispositivos con las notificaciones activadas ----
   const devices = (await sql.query('select * from devices')) as DeviceRow[];
@@ -170,10 +193,12 @@ export async function dispatch(data: Pick<ScheduleResponse, 'episodes' | 'events
 
       // Resumen diario o semanal, a la hora local elegida
       if (prefs.digest !== 'off') {
+        // Se envía en la revisión horaria que cae dentro de la hora local elegida
+        // (en zonas con media hora, como India, llega a las hh:30)
         const local = utcToZoned(now, ctx.tz);
-        const [h, m] = local.time.split(':').map(Number);
+        const h = Number(local.time.slice(0, 2));
         const isMonday = new Date(`${local.date}T12:00:00Z`).getUTCDay() === 1;
-        if (h === prefs.digestHour && m < DIGEST_WINDOW_MIN && (prefs.digest === 'daily' || isMonday)) {
+        if (hourly && h === prefs.digestHour && (prefs.digest === 'daily' || isMonday)) {
           const weekly = prefs.digest === 'weekly';
           const horizon = now + (weekly ? 7 : 1) * 24 * 3600_000;
           const list = mine.filter((s) => {
