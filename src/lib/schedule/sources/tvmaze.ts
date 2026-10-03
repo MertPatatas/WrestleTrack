@@ -113,6 +113,19 @@ async function specialEvents(src: TvmazeSpecialSource, from: number, to: number)
 export interface TvmazeResult {
   episodes: AutoEpisode[];
   events: SpecialEvent[];
+  showImages: Record<string, string>; // póster actual de cada show semanal (id de weeklyShows → URL)
+}
+
+/** Póster principal del programa en TVmaze (lo actualizan cuando cambia la imagen del show). */
+async function showPoster(showId: number): Promise<string | null> {
+  const res = await fetch(`${API}/shows/${showId}`, {
+    headers: { 'User-Agent': USER_AGENT },
+    signal: AbortSignal.timeout(12000),
+    cache: 'no-store',
+  });
+  if (!res.ok) return null;
+  const show = (await res.json()) as { image?: { original?: string; medium?: string } | null };
+  return show.image?.original ?? show.image?.medium ?? null;
 }
 
 /** Episodios semanales y eventos especiales entre hace pastDays y dentro de futureDays. */
@@ -122,10 +135,15 @@ export async function fetchTvmaze(now = Date.now(), pastDays = 15, futureDays = 
   const weekly = weeklyShows.filter((s) => s.tvmaze);
 
   // Si un programa falla, se sigue con el resto (ese show usará sus reglas)
-  const [weeklyResults, specialResults] = await Promise.all([
+  const [weeklyResults, specialResults, posterResults] = await Promise.all([
     Promise.allSettled(weekly.map((s) => weeklyEpisodes(s, from, to))),
     Promise.allSettled(tvmazeSpecials.map((s) => specialEvents(s, from, to))),
+    Promise.allSettled(weekly.map((s) => showPoster(s.tvmaze!))),
   ]);
+  const showImages: Record<string, string> = {};
+  posterResults.forEach((r, i) => {
+    if (r.status === 'fulfilled' && r.value) showImages[weekly[i].id] = r.value;
+  });
   const failed = [...weeklyResults, ...specialResults].filter((r) => r.status === 'rejected');
   if (failed.length === weeklyResults.length + specialResults.length) {
     throw new Error(String((failed[0] as PromiseRejectedResult).reason));
@@ -133,5 +151,6 @@ export async function fetchTvmaze(now = Date.now(), pastDays = 15, futureDays = 
   return {
     episodes: weeklyResults.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])),
     events: specialResults.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])),
+    showImages,
   };
 }

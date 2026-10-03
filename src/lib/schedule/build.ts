@@ -16,6 +16,7 @@ export interface ScheduleOptions {
   futureDays?: number;
   episodes?: AutoEpisode[]; // episodios semanales publicados por las fuentes (TVmaze)
   autoEvents?: SpecialEvent[]; // eventos especiales de las fuentes, de más a menos fiable
+  showImages?: Record<string, string>; // póster de cada show semanal (TVmaze)
 }
 
 const normalizeName = (s: string) =>
@@ -69,7 +70,7 @@ function weeklyToShow(
   w: WeeklyShow,
   id: string,
   date: string,
-  over: { time?: string; name?: string; venue?: string; broadcast?: string; note?: string } = {},
+  over: { time?: string; name?: string; venue?: string; broadcast?: string; note?: string; image?: string } = {},
 ): Show {
   const start = zonedTimeToUtc(date, over.time ?? w.time, w.timeZone);
   return {
@@ -83,13 +84,14 @@ function weeklyToShow(
     venue: over.venue ?? w.venue,
     broadcast: over.broadcast ?? w.broadcast,
     note: over.note ?? w.note,
+    image: over.image ?? w.image,
   };
 }
 
 /** Shows (semanales + especiales) entre hace pastDays y dentro de futureDays, ordenados por fecha. */
 export function buildSchedule(
   now: number = Date.now(),
-  { pastDays = 14, futureDays = 90, episodes = [], autoEvents = [] }: ScheduleOptions = {},
+  { pastDays = 14, futureDays = 90, episodes = [], autoEvents = [], showImages = {} }: ScheduleOptions = {},
 ): Show[] {
   const from = now - pastDays * DAY_MS;
   const to = now + futureDays * DAY_MS;
@@ -121,7 +123,7 @@ export function buildSchedule(
       if (c && date >= c.first && date <= c.last) continue;
       const ex = exceptionFor.get(`${w.id}:${date}`);
       if (ex?.cancel) continue;
-      shows.push(weeklyToShow(w, `${w.id}-${date}`, ex?.newDate ?? date, ex ?? {}));
+      shows.push(weeklyToShow(w, `${w.id}-${date}`, ex?.newDate ?? date, { ...ex, image: showImages[w.id] }));
     }
   }
 
@@ -138,6 +140,7 @@ export function buildSchedule(
         venue: ex?.venue ?? ep.venue,
         broadcast: ex?.broadcast,
         note: ex?.note,
+        image: showImages[w.id],
       }),
     );
   }

@@ -1,7 +1,7 @@
 import 'server-only';
 import type { AutoEpisode, SpecialEvent } from '../../data/schedule';
 import { fetchNjpwBigEvents } from './sources/njpw';
-import { fetchTvmaze } from './sources/tvmaze';
+import { fetchTvmaze, type TvmazeResult } from './sources/tvmaze';
 import { fetchWikipediaEvents } from './sources/wikipedia';
 
 export interface ScheduleSourceStatus {
@@ -14,6 +14,7 @@ export interface ScheduleSourceStatus {
 export interface ScheduleResponse {
   episodes: AutoEpisode[]; // episodios semanales (TVmaze)
   events: SpecialEvent[]; // eventos especiales, de la fuente más fiable a la menos
+  showImages: Record<string, string>; // póster de cada show semanal (TVmaze)
   sources: ScheduleSourceStatus[];
   updatedAt: string;
 }
@@ -21,7 +22,7 @@ export interface ScheduleResponse {
 const TTL_MS = 6 * 3600_000;
 
 // Lo último que funcionó de cada fuente: si una falla, se reutiliza su copia anterior
-const last: { tvmaze?: { episodes: AutoEpisode[]; events: SpecialEvent[] }; njpw?: SpecialEvent[]; wikipedia?: SpecialEvent[] } = {};
+const last: { tvmaze?: TvmazeResult; njpw?: SpecialEvent[]; wikipedia?: SpecialEvent[] } = {};
 let cache: { at: number; data: ScheduleResponse } | null = null;
 let inflight: Promise<ScheduleResponse> | null = null;
 
@@ -49,6 +50,7 @@ async function build(): Promise<ScheduleResponse> {
 
   return {
     episodes: last.tvmaze?.episodes ?? [],
+    showImages: last.tvmaze?.showImages ?? {},
     // Orden = prioridad al quitar duplicados: TVmaze y NJPW traen hora; Wikipedia solo fecha
     events: [...(last.tvmaze?.events ?? []), ...(last.njpw ?? []), ...(last.wikipedia ?? [])],
     sources,

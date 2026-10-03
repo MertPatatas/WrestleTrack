@@ -28,7 +28,11 @@ export interface WeeklyShow {
   broadcast?: string;
   note?: string;
   tvmaze?: number; // id del programa en TVmaze (https://www.tvmaze.com)
+  image?: string; // imagen fija del show (si no, se usa el póster de TVmaze)
 }
+
+// Fachada de la Arena México (dominio público, Wikimedia Commons, autor: Thelmadatter)
+const ARENA_MEXICO = 'https://en.wikipedia.org/wiki/Special:FilePath/ArenaMexicoDF.JPG?width=1200';
 
 export interface SpecialEvent {
   id: string;
@@ -82,9 +86,9 @@ export const weeklyShows: WeeklyShow[] = [
   { id: 'collision', promotion: 'aew', name: 'Collision', weekday: 6, time: '20:00', timeZone: ET, durationMin: 120, tvmaze: 68778 },
 
   // CMLL (Arena México; sin fuente automática, su cartelera semanal es muy estable)
-  { id: 'cmll-martes', promotion: 'cmll', name: 'Martes de Arena México', weekday: 2, time: '19:30', timeZone: CDMX, durationMin: 150, venue: 'Arena México' },
-  { id: 'cmll-viernes', promotion: 'cmll', name: 'Viernes Espectacular', weekday: 5, time: '20:30', timeZone: CDMX, durationMin: 150, venue: 'Arena México' },
-  { id: 'cmll-domingo', promotion: 'cmll', name: 'Domingo Familiar', weekday: 0, time: '17:00', timeZone: CDMX, durationMin: 150, venue: 'Arena México' },
+  { id: 'cmll-martes', promotion: 'cmll', name: 'Martes de Arena México', weekday: 2, time: '19:30', timeZone: CDMX, durationMin: 150, venue: 'Arena México', image: ARENA_MEXICO },
+  { id: 'cmll-viernes', promotion: 'cmll', name: 'Viernes Espectacular', weekday: 5, time: '20:30', timeZone: CDMX, durationMin: 150, venue: 'Arena México', image: ARENA_MEXICO },
+  { id: 'cmll-domingo', promotion: 'cmll', name: 'Domingo Familiar', weekday: 0, time: '17:00', timeZone: CDMX, durationMin: 150, venue: 'Arena México', image: ARENA_MEXICO },
 
   // AAA (en directo el tercer sábado de cada mes; el resto, grabado)
   { id: 'aaa', promotion: 'aaa', name: 'Lucha Libre AAA', weekday: 6, time: '20:00', timeZone: CDMX, durationMin: 60, broadcast: 'Fox (México) · YouTube', tvmaze: 89983 },
