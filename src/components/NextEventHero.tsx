@@ -8,16 +8,32 @@ import { showDayKey, type Formatter } from '../lib/dates';
 import { PromoLogo } from './PromoLogo';
 
 /**
- * Cabecera con imagen de fondo: el cartel del evento (Wikipedia o NJPW) ocupando todo el fondo,
- * oscurecido y algo desenfocado (los carteles de Wikipedia son pequeños y así no se nota).
- * Sin cartel, o si no carga, se ve la foto del ring que hay debajo.
+ * Cabecera con la imagen del evento o del show (cartel de Wikipedia/NJPW o póster de TVmaze):
+ *  - de fondo, la imagen muy desenfocada, que solo aporta sus colores;
+ *  - encima, la imagen nítida a su tamaño real, pegada a la derecha y fundida hacia la izquierda
+ *    (los carteles son verticales y pequeños: estirarlos a todo el ancho los pixela).
+ * Sin imagen, o si no carga, se ve la foto del ring que hay debajo.
  */
 export function HeroWithPoster({ image, children }: { image?: string; children: ReactNode }) {
+  const bg = image ? { backgroundImage: `url(${JSON.stringify(image)})` } : undefined;
   return (
     <>
       <div className="hero-bg" aria-hidden="true" />
       {image ? (
-        <div className="hero-bg hero-bg--poster" style={{ backgroundImage: `url(${JSON.stringify(image)})` }} aria-hidden="true" />
+        <>
+          <div className="hero-bg hero-bg--poster-blur" style={bg} aria-hidden="true" />
+          <img
+            className="hero-poster-art"
+            src={image}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </>
       ) : null}
       <div className="hero-content">{children}</div>
     </>
