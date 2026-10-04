@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { InstallCard } from '../components/InstallCard';
 import { PageHeader } from '../components/PageHeader';
 import { AccountCard } from '../components/profile/AccountCard';
+import { GuestProfileCard } from '../components/profile/GuestProfileCard';
 import { NotificationsCard } from '../components/profile/NotificationsCard';
 import { promotions } from '../data/mock';
 import { FAVORITE_OPTIONS, LANGUAGES, LANGUAGE_NAMES, type FavoritePromotion, type Lang } from '../i18n/config';
@@ -41,7 +42,7 @@ function allTimeZones(): string[] {
 const cityName = (tz: string) => tz.split('/').pop()!.replace(/_/g, ' ');
 
 export function ProfileView() {
-  const { settings, update, lang, deviceLang, deviceTimeZone, t } = useSettings();
+  const { settings, update, lang, deviceLang, deviceTimeZone, t, user, authReady, accountsEnabled } = useSettings();
 
   const toggleFavorite = (id: FavoritePromotion) => {
     const favorites = settings.favorites.includes(id)
@@ -65,6 +66,26 @@ export function ProfileView() {
       all: [...extra, ...all].map((tz) => ({ value: tz, label: label(tz, true) })),
     };
   }, [deviceTimeZone, settings.timeZone, t]);
+
+  // Invitado (sin sesión): el perfil solo ofrece iniciar sesión o crear cuenta
+  if (accountsEnabled && !authReady) {
+    return (
+      <>
+        <PageHeader title={t('profile.title')} />
+        <div className="card" aria-hidden="true">
+          <div className="skeleton-line" />
+        </div>
+      </>
+    );
+  }
+  if (accountsEnabled && !user) {
+    return (
+      <>
+        <PageHeader title={t('profile.title')} />
+        <GuestProfileCard />
+      </>
+    );
+  }
 
   return (
     <>

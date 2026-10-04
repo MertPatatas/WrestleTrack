@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useT } from '../i18n/SettingsProvider';
 import { navItems } from './nav';
+import { SessionButton } from './SessionButton';
 import { UpcomingRail } from './UpcomingRail';
 import { Wordmark } from './Wordmark';
 
@@ -14,7 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
   const showRail = !pathname.startsWith('/shows');
 
-  // Inicio de sesión y textos legales van solos, sin menús (se ven también sin sesión)
+  // Inicio de sesión y textos legales van solos, sin menús
   if (/^\/(login|privacidad|condiciones)(\/|$)/.test(pathname)) return <main className="main-bare">{children}</main>;
 
   return (
@@ -22,6 +23,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Móvil: cabecera arriba y pestañas abajo */}
       <header className="topbar">
         <Wordmark />
+        <SessionButton />
       </header>
 
       {/* Escritorio: barra lateral */}
@@ -43,6 +45,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="main">
+        {/* Escritorio: acceso a la cuenta arriba a la derecha */}
+        <div className="main-top">
+          <SessionButton />
+        </div>
         <div className="content" data-rail={showRail ? 'on' : 'off'}>
           <div className="page">{children}</div>
           {showRail ? (

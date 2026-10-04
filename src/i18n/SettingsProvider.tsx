@@ -32,6 +32,10 @@ interface SettingsContextValue {
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
   /** Usuario con sesión (null si no hay, o mientras se comprueba). */
   user: SessionUser | null;
+  /** false mientras se comprueba si hay sesión (para no mostrar la vista de invitado por error). */
+  authReady: boolean;
+  /** true si la app tiene cuentas (Supabase configurado); en desarrollo sin claves es false. */
+  accountsEnabled: boolean;
   signOut: () => Promise<void>;
   /** Sincronización de ajustes con la cuenta. */
   sync: SyncState;
@@ -86,6 +90,7 @@ export function SettingsProvider({
   const [settings, setSettings] = useState(initialSettings);
   const [deviceTimeZone, setDeviceTimeZone] = useState<string | null>(null);
   const [user, setUser] = useState<SessionUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [sync, setSync] = useState<SyncState>('local');
   const [notifications, setNotifications] = useState<NotificationPrefs | null>(null);
   const syncedUser = useRef<string | null>(null);
@@ -98,11 +103,18 @@ export function SettingsProvider({
 
   // Sesión de Supabase (y sus cambios: inicio o cierre de sesión en esta u otra pestaña)
   useEffect(() => {
-    if (!supabaseReady()) return;
+    if (!supabaseReady()) {
+      setAuthReady(true);
+      return;
+    }
     const supabase = getSupabase();
     const toUser = (u: { id: string; email?: string | null } | null | undefined): SessionUser | null =>
       u ? { id: u.id, email: u.email ?? null } : null;
-    supabase.auth.getUser().then(({ data }) => setUser(toUser(data.user)));
+    supabase.auth
+      .getUser()
+      .then(({ data }) => setUser(toUser(data.user)))
+      .catch(() => setUser(null))
+      .finally(() => setAuthReady(true));
     const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(toUser(session?.user)));
     return () => data.subscription.unsubscribe();
   }, []);
@@ -210,7 +222,7 @@ export function SettingsProvider({
     if (supabaseReady()) await getSupabase().auth.signOut();
     setUser(null);
     // Carga completa: que no se reutilice ninguna página guardada de cuando había sesión
-    window.location.replace('/login');
+    window.location.replace('/');
   }, []);
 
   const value = useMemo<SettingsContextValue>(
@@ -224,13 +236,30 @@ export function SettingsProvider({
       deviceTimeZone,
       t: (key, vars) => translate(lang, key, vars),
       user,
+      authReady,
+      accountsEnabled: supabaseConfig !== null,
       signOut,
       sync,
       syncError,
       notifications,
       updateNotifications,
     }),
-    [settings, update, lang, deviceLang, deviceLocale, deviceTimeZone, user, signOut, sync, syncError, notifications, updateNotifications],
+    [
+      settings,
+      update,
+      lang,
+      deviceLang,
+      deviceLocale,
+      deviceTimeZone,
+      user,
+      authReady,
+      supabaseConfig,
+      signOut,
+      sync,
+      syncError,
+      notifications,
+      updateNotifications,
+    ],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

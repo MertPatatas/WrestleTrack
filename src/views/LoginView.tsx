@@ -135,6 +135,14 @@ export function LoginView({ next, error }: { next: string; error?: string }) {
                 {t('login.sendEmail')}
               </button>
             </form>
+
+            {/* Iniciar sesión es opcional: se puede seguir navegando sin cuenta */}
+            <div className="login-guest">
+              <Link href={next} className="button button--ghost button--block">
+                {t('login.guest')}
+              </Link>
+              <p className="muted small">{t('login.guestNote')}</p>
+            </div>
           </>
         ) : (
           <form onSubmit={verify} className="login-form">

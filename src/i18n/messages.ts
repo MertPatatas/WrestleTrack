@@ -127,7 +127,7 @@ const es = {
   'profile.followingHelp': 'Las notificaciones solo te avisarán de estas promociones.',
 
   'login.title': 'Iniciar sesión',
-  'login.subtitle': 'Entra para ver noticias, storylines y el calendario, y recibir avisos de tus shows.',
+  'login.subtitle': 'Inicia sesión para recibir avisos de tus shows y guardar tus ajustes en todos tus dispositivos.',
   'login.google': 'Continuar con Google',
   'login.or': 'o con tu email',
   'login.email': 'Email',
@@ -149,6 +149,19 @@ const es = {
 
   'login.legalPrefix': 'Al continuar aceptas las',
   'login.legalAnd': 'y la',
+
+  'login.guest': 'Seguir sin iniciar sesión',
+  'login.guestNote': 'Podrás ver noticias, storylines y el calendario. Para recibir notificaciones necesitas una cuenta.',
+
+  'session.signIn': 'Iniciar sesión',
+  'session.profile': 'Tu perfil',
+
+  'guest.title': 'No has iniciado sesión',
+  'guest.text': 'Inicia sesión o crea una cuenta gratis para personalizar la app.',
+  'guest.benefitAlerts': 'Notificaciones de tus shows y grandes eventos',
+  'guest.benefitFavorites': 'Elegir tus empresas favoritas, zona horaria e idioma',
+  'guest.benefitSync': 'Tus ajustes guardados en todos tus dispositivos',
+  'guest.button': 'Iniciar sesión o crear cuenta',
 
   'legal.privacy': 'Política de privacidad',
   'legal.terms': 'Condiciones del servicio',
@@ -354,7 +367,7 @@ const en: Messages = {
   'profile.followingHelp': 'Notifications will only cover these promotions.',
 
   'login.title': 'Sign in',
-  'login.subtitle': 'Sign in to see news, storylines and the calendar, and get alerts for your shows.',
+  'login.subtitle': 'Sign in to get alerts for your shows and keep your settings on all your devices.',
   'login.google': 'Continue with Google',
   'login.or': 'or with your email',
   'login.email': 'Email',
@@ -376,6 +389,19 @@ const en: Messages = {
 
   'login.legalPrefix': 'By continuing you accept the',
   'login.legalAnd': 'and the',
+
+  'login.guest': 'Continue without signing in',
+  'login.guestNote': 'You can browse news, storylines and the calendar. You need an account to get notifications.',
+
+  'session.signIn': 'Sign in',
+  'session.profile': 'Your profile',
+
+  'guest.title': 'You are not signed in',
+  'guest.text': 'Sign in or create a free account to personalize the app.',
+  'guest.benefitAlerts': 'Notifications for your shows and big events',
+  'guest.benefitFavorites': 'Pick your favorite promotions, time zone and language',
+  'guest.benefitSync': 'Your settings saved across all your devices',
+  'guest.button': 'Sign in or create account',
 
   'legal.privacy': 'Privacy policy',
   'legal.terms': 'Terms of service',
