@@ -937,6 +937,11 @@ button {
 
 .button {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
   min-height: 44px;
   padding: 0 20px;
   background: var(--gold);
