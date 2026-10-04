@@ -38,7 +38,7 @@ interface RecapRow {
   promotion: Recap['promotion'];
   name: string;
   event_date: string;
-  items: RecapItem[];
+  items: RecapItem[] | string;
   lang: Recap['lang'];
   source_name: string;
   source_url: string;
@@ -66,7 +66,7 @@ const dbStore: Store = {
   async saveRecap(r) {
     await (await db()).query(
       `insert into app.recaps (show_id, promotion, name, event_date, items, lang, source_name, source_url, updated_at)
-       values ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, now())
+       values ($1, $2, $3, $4, $5::text::jsonb, $6, $7, $8, now())
        on conflict (show_id) do update set items = excluded.items, name = excluded.name, lang = excluded.lang,
          source_name = excluded.source_name, source_url = excluded.source_url, updated_at = now()`,
       [r.showId, r.promotion, r.name, r.eventDate, JSON.stringify(r.items), r.lang, r.source.name, r.source.url],
@@ -95,7 +95,8 @@ const dbStore: Store = {
         promotion: r.promotion,
         name: r.name,
         eventDate: r.event_date,
-        items: r.items,
+        // Filas antiguas guardadas como texto JSON (doble codificación)
+        items: typeof r.items === 'string' ? (JSON.parse(r.items) as RecapItem[]) : r.items,
         lang: r.lang,
         source: { name: r.source_name, url: r.source_url },
         updatedAt: r.updated_at.toISOString(),

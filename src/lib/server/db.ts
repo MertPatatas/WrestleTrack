@@ -118,6 +118,8 @@ const SCHEMA = [
      value      text not null,
      updated_at timestamptz not null default now()
    )`,
+  // Corrige resultados guardados como texto JSON en vez de lista (fallo de la primera versión)
+  `update app.recaps set items = (items #>> '{}')::jsonb where jsonb_typeof(items) = 'string'`,
   `alter table app.recaps enable row level security`,
   `alter table app.videos enable row level security`,
   `alter table app.meta enable row level security`,
