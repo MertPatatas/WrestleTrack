@@ -1,8 +1,6 @@
-import { pageTitle } from '../../i18n/server';
-import { StorylinesView } from '../../views/StorylinesView';
+import { redirect } from 'next/navigation';
 
-export const generateMetadata = () => pageTitle('storylines.title');
-
+// Las storylines ahora son una pestaña de "Ponme al día"
 export default function Page() {
-  return <StorylinesView />;
+  redirect('/al-dia?tab=storylines');
 }

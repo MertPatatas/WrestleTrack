@@ -48,14 +48,13 @@ export const navItems: NavItem[] = [
     ),
   },
   {
-    href: '/storylines',
-    label: 'nav.storylines',
+    href: '/al-dia',
+    label: 'nav.catchup',
     icon: (
       <Icon>
-        <circle cx="6" cy="6" r="2.5" />
-        <circle cx="18" cy="12" r="2.5" />
-        <circle cx="6" cy="18" r="2.5" />
-        <path d="M8.2 7.2l7.6 3.6M8.2 16.8l7.6-3.6" />
+        <path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1" />
+        <path d="M3.5 4v4.5H8" />
+        <path d="M12 8v4.2l3 1.8" />
       </Icon>
     ),
   },

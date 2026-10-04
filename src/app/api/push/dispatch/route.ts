@@ -1,5 +1,6 @@
 import { Receiver } from '@upstash/qstash';
 import { NextResponse, type NextRequest } from 'next/server';
+import { refreshRecaps, type RefreshResult } from '../../../../lib/recaps/collect';
 import { loadSchedule, type ScheduleResponse } from '../../../../lib/schedule/load';
 import { dbConfigured } from '../../../../lib/server/db';
 import { dispatch } from '../../../../lib/server/dispatch';
@@ -45,8 +46,14 @@ async function handle(request: NextRequest) {
     return NextResponse.json({ error: 'Base de datos o notificaciones sin configurar' }, { status: 503 });
   }
   try {
-    const result = await dispatch(await scheduleData(request));
-    return NextResponse.json(result);
+    const data = await scheduleData(request);
+    const result = await dispatch(data);
+    // En la revisión horaria, también se buscan resultados y vídeos nuevos para "Ponme al día"
+    let recaps: RefreshResult | { error: string } | undefined;
+    if (new Date().getUTCMinutes() < 10) {
+      recaps = await refreshRecaps(data).catch((err) => ({ error: err instanceof Error ? err.message : String(err) }));
+    }
+    return NextResponse.json({ ...result, recaps });
   } catch (err) {
     console.error('[dispatch]', err);
     return NextResponse.json({ error: 'Error al enviar avisos' }, { status: 500 });

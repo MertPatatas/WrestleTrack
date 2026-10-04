@@ -36,6 +36,43 @@ export interface Storyline {
   updates: StorylineUpdate[]; // la más reciente primero
 }
 
+/** Un combate (o un segmento destacado) de los resultados de un show ya emitido. */
+export interface RecapItem {
+  title?: string; // estipulación o título en juego
+  text: string; // "A vs. B", o la frase del resumen ("A venció a B…")
+  result?: string; // "Ganador: A"
+  segment?: boolean; // no es un combate (promo, ataque, anuncio…)
+}
+
+/** Resultados de un show ya emitido. */
+export interface Recap {
+  showId: string;
+  promotion: PromotionId;
+  name: string;
+  eventDate: string; // 'YYYY-MM-DD'
+  items: RecapItem[];
+  lang: 'es' | 'en';
+  source: { name: string; url: string };
+  updatedAt: string; // ISO 8601
+}
+
+/** Vídeo de análisis o resumen de un show (YouTube). */
+export interface AnalysisVideo {
+  id: string; // id del vídeo de YouTube
+  title: string;
+  channel: string;
+  channelId: string;
+  lang: 'es' | 'en';
+  publishedAt: string; // ISO 8601
+  showId: string;
+}
+
+export interface RecapsResponse {
+  recaps: Recap[];
+  videos: AnalysisVideo[];
+  updatedAt: string | null; // última revisión de las fuentes
+}
+
 export type ShowKind = 'weekly' | 'ple' | 'other';
 
 export interface Show {

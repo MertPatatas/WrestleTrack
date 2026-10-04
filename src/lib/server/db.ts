@@ -90,6 +90,37 @@ const SCHEMA = [
      key        text primary key,
      first_seen timestamptz not null default now()
    )`,
+  // "Ponme al día": resultados de cada show y vídeos de análisis (se guardan porque las fuentes
+  // solo publican los últimos días)
+  `create table if not exists app.recaps (
+     show_id     text primary key,
+     promotion   text not null,
+     name        text not null,
+     event_date  text not null,                         -- 'YYYY-MM-DD'
+     items       jsonb not null,
+     lang        text not null,
+     source_name text not null,
+     source_url  text not null,
+     updated_at  timestamptz not null default now()
+   )`,
+  `create table if not exists app.videos (
+     video_id     text primary key,
+     title        text not null,
+     channel      text not null,
+     channel_id   text not null,
+     lang         text not null,
+     published_at timestamptz not null,
+     show_id      text not null
+   )`,
+  `create index if not exists videos_published_idx on app.videos (published_at desc)`,
+  `create table if not exists app.meta (
+     key        text primary key,
+     value      text not null,
+     updated_at timestamptz not null default now()
+   )`,
+  `alter table app.recaps enable row level security`,
+  `alter table app.videos enable row level security`,
+  `alter table app.meta enable row level security`,
   `alter table app.profiles enable row level security`,
   `alter table app.push_subscriptions enable row level security`,
   `alter table app.notification_log enable row level security`,

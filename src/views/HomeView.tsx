@@ -71,7 +71,7 @@ export function HomeView() {
       </section>
 
       <section>
-        <SectionHead title={t('home.storylines')} href="/storylines" />
+        <SectionHead title={t('home.storylines')} href="/al-dia?tab=storylines" />
         <div className="stack">
           {data?.storylines.slice(0, 2).map((s) => <StorylineCard key={s.id} item={s} now={now} />)}
         </div>

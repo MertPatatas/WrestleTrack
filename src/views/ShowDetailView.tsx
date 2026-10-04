@@ -2,11 +2,14 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { RecapResults } from '../components/catchup/RecapResults';
+import { VideoCard } from '../components/catchup/VideoCard';
 import { HeroWithPoster } from '../components/NextEventHero';
 import { PromoLogo } from '../components/PromoLogo';
 import { REGIONS, detectRegion, whereToWatch, type Region } from '../data/broadcast';
 import type { Show } from '../data/types';
 import { useAppData } from '../data/useAppData';
+import { useRecaps } from '../data/useRecaps';
 import { useSettings } from '../i18n/SettingsProvider';
 import type { MessageKey } from '../i18n/messages';
 import { showDayKey, useFormat } from '../lib/dates';
@@ -49,7 +52,7 @@ function useCard(show: Show | undefined, ended: boolean): CardState | null {
 export function ShowDetailView({ id }: { id: string }) {
   const data = useAppData();
   const fmt = useFormat();
-  const { t, locale, timeZone } = useSettings();
+  const { t, locale, timeZone, lang } = useSettings();
   const show = useMemo(() => data?.shows.find((s) => s.id === id), [data, id]);
   const [now, setNow] = useState(() => Date.now());
   const [region, setRegion] = useState<Region | null>(null);
@@ -82,6 +85,12 @@ export function ShowDetailView({ id }: { id: string }) {
 
   const ended = show ? new Date(show.endsAt).getTime() <= now : false;
   const card = useCard(show, ended);
+  // Ya emitido: resultados y vídeos de análisis ("Ponme al día")
+  const recaps = useRecaps(ended);
+  const recap = recaps.data?.recaps.find((r) => r.showId === id);
+  const videos = (recaps.data?.videos ?? [])
+    .filter((v) => v.showId === id)
+    .sort((a, b) => Number(b.lang === lang) - Number(a.lang === lang) || b.publishedAt.localeCompare(a.publishedAt));
 
   if (!data || !fmt) {
     return (
@@ -202,17 +211,26 @@ export function ShowDetailView({ id }: { id: string }) {
       </section>
 
       <section>
-        <h2 className="section-title section-title--solo">{t('detail.card')}</h2>
+        <h2 className="section-title section-title--solo">{t(ended ? 'detail.resultsTitle' : 'detail.card')}</h2>
         <div className="card">
           {ended ? (
-            <>
-              <p className="card-text">{t('detail.cardPast')}</p>
-              {show.url ? (
-                <a className="link" href={show.url} target="_blank" rel="noopener noreferrer">
-                  {t('detail.results')} ↗
-                </a>
-              ) : null}
-            </>
+            recap ? (
+              <RecapResults recap={recap} />
+            ) : recaps.status === 'loading' ? (
+              <div aria-hidden="true">
+                <div className="skeleton-line" />
+                <div className="skeleton-line skeleton-line--short" />
+              </div>
+            ) : (
+              <>
+                <p className="card-text">{t('detail.noResults')}</p>
+                {show.url ? (
+                  <a className="link" href={show.url} target="_blank" rel="noopener noreferrer">
+                    {t('detail.results')} ↗
+                  </a>
+                ) : null}
+              </>
+            )
           ) : !card || card.status === 'loading' ? (
             <div aria-hidden="true">
               <div className="skeleton-line" />
@@ -252,6 +270,19 @@ export function ShowDetailView({ id }: { id: string }) {
           )}
         </div>
       </section>
+
+      {ended && videos.length > 0 ? (
+        <section>
+          <h2 className="section-title section-title--solo">{t('detail.analysisTitle')}</h2>
+          <div className="card">
+            <div className="video-grid">
+              {videos.map((v) => (
+                <VideoCard key={v.id} video={v} fmt={fmt} now={now} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
     </article>
   );
 }

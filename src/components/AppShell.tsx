@@ -13,7 +13,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const t = useT();
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
-  const showRail = !pathname.startsWith('/shows');
+  // Calendario y "Ponme al día" ocupan todo el ancho (listas largas, vídeos)
+  const showRail = !pathname.startsWith('/shows') && !pathname.startsWith('/al-dia');
 
   // Inicio de sesión y textos legales van solos, sin menús
   if (/^\/(login|privacidad|condiciones)(\/|$)/.test(pathname)) return <main className="main-bare">{children}</main>;
