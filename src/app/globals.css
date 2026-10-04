@@ -637,18 +637,7 @@ button {
   filter: brightness(1.1);
 }
 .hero--static {
-  display: flex;
-  align-items: flex-end;
-  min-height: 230px;
   margin-top: 12px;
-}
-.hero--static .hero-content {
-  width: 100%;
-}
-@media (min-width: 720px) {
-  .hero--static {
-    min-height: 270px;
-  }
 }
 
 /* Pantalla de entrada con el ring de fondo */
