@@ -68,12 +68,13 @@ export function CatchUpView({ initialTab }: { initialTab: CatchUpTab }) {
   const { t, lang } = useSettings();
   const [tab, setTab] = useState<CatchUpTab>(initialTab);
   const [filter, setFilter] = useState<Filter>('all');
-  const [scope, setScope] = useState<'device' | 'all'>('device');
+  // Vídeos: por defecto todos los idiomas (los del idioma de la app van primero en cada show)
+  const [scope, setScope] = useState<'device' | 'all'>('all');
   const now = Date.now();
 
   useEffect(() => {
     try {
-      if (localStorage.getItem(VIDEO_SCOPE_KEY) === 'all') setScope('all');
+      if (localStorage.getItem(VIDEO_SCOPE_KEY) === 'device') setScope('device');
     } catch {
       // almacenamiento no disponible: idioma del dispositivo
     }
