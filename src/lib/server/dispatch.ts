@@ -1,5 +1,5 @@
 import 'server-only';
-import type { Show } from '../../data/types';
+import { isSpecial, type Show } from '../../data/types';
 import { isLang, sanitizeFavorites, type Lang } from '../../i18n/config';
 import { translate, type MessageKey } from '../../i18n/messages';
 import { LEAD_OPTIONS, type NotificationPrefs } from '../notifications/prefs';
@@ -34,7 +34,7 @@ function profileLocale(p: ProfileRow, lang: Lang): string {
 function wants(show: Show, favorites: string[], prefs: NotificationPrefs): boolean {
   if (!favorites.includes(show.promotion)) return false;
   if (prefs.kinds === 'weekly') return show.kind === 'weekly';
-  if (prefs.kinds === 'special') return show.kind !== 'weekly';
+  if (prefs.kinds === 'special') return isSpecial(show);
   return true;
 }
 

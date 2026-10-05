@@ -17,8 +17,11 @@ export async function GET(request: NextRequest) {
   const promotion = q.get('promotion') ?? '';
   const date = q.get('date') ?? '';
   const url = q.get('url') ?? undefined;
+  const nightParam = q.get('night');
+  const night = nightParam ? Number(nightParam) : undefined;
 
   if (
+    (night !== undefined && !(Number.isInteger(night) && night >= 1 && night <= 9)) ||
     !/^[a-z0-9-]{3,120}$/.test(id) ||
     !['weekly', 'ple', 'other'].includes(kind) ||
     !PROMOTIONS.has(promotion) ||
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Parámetros no válidos' }, { status: 400 });
   }
 
-  const show = { id, kind, promotion, eventDate: date, url, name: '' } as unknown as Show;
+  const show = { id, kind, promotion, eventDate: date, url, night, name: '' } as unknown as Show;
   const card = await loadCard(show);
   return NextResponse.json(
     { card },

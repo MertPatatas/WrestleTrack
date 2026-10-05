@@ -49,6 +49,8 @@ export function useAppData() {
             storylines: getStorylines(),
             shows: buildSchedule(Date.now(), {
               futureDays: 120,
+              // Los grandes eventos se anuncian con muchos meses de antelación (Royal Rumble, WrestleMania...)
+              specialDays: 450,
               episodes: auto?.episodes,
               autoEvents: auto?.events,
               showImages: auto?.showImages,

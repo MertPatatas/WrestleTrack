@@ -12,6 +12,7 @@ import { api as wikiApi, clean as cleanWiki } from './sources/wikipedia';
 export interface CardMatch {
   title?: string; // estipulación o tipo de combate ("Campeonato Mundial", "Ladder match"...)
   participants: string; // "A vs. B"
+  group?: string; // parte del evento si tiene varias ("Night 1", "Pre-show"...)
 }
 
 export interface EventCard {
@@ -65,45 +66,70 @@ function titleCase(text: string): string {
 
 // ---------------------------------------------------------------- Wikipedia
 
-/** Combates de la plantilla "Pro wrestling results table" de un artículo. */
-export function parseWikiCard(wikitext: string): CardMatch[] {
-  const start = wikitext.search(/\{\{\s*Pro ?wrestling results table/i);
-  if (start < 0) return [];
-  // Fin de la plantilla, contando las llaves de plantillas anidadas
-  let depth = 0;
-  let end = start;
-  for (let i = start; i < wikitext.length - 1; i++) {
-    if (wikitext[i] === '{' && wikitext[i + 1] === '{') {
-      depth++;
-      i++;
-    } else if (wikitext[i] === '}' && wikitext[i + 1] === '}') {
-      depth--;
-      i++;
-      if (depth === 0) {
-        end = i + 1;
-        break;
+/** Bloques de la plantilla "Pro wrestling results table" (uno por noche o por pre-show). */
+function resultTables(wikitext: string): string[] {
+  const blocks: string[] = [];
+  const pattern = /\{\{\s*Pro ?wrestling results table/gi;
+  for (let m = pattern.exec(wikitext); m; m = pattern.exec(wikitext)) {
+    // Fin de la plantilla, contando las llaves de plantillas anidadas
+    let depth = 0;
+    let end = m.index;
+    for (let i = m.index; i < wikitext.length - 1; i++) {
+      if (wikitext[i] === '{' && wikitext[i + 1] === '{') {
+        depth++;
+        i++;
+      } else if (wikitext[i] === '}' && wikitext[i + 1] === '}') {
+        depth--;
+        i++;
+        if (depth === 0) {
+          end = i + 1;
+          break;
+        }
       }
     }
+    if (end <= m.index) break;
+    blocks.push(wikitext.slice(m.index, end));
+    pattern.lastIndex = end;
   }
-  const block = wikitext.slice(start, end);
-  const field = (name: string) => block.match(new RegExp(`\\|\\s*${name}\\s*=\\s*([^\\n]*)`, 'i'))?.[1] ?? '';
-  const matches: CardMatch[] = [];
-  for (let n = 1; n <= 40; n++) {
-    const raw = field(`match${n}`);
-    if (!raw) continue;
-    const participants = cleanWiki(raw);
-    if (!participants) continue;
-    const title = cleanWiki(field(`stip${n}`)) || undefined;
-    matches.push({ title, participants });
-  }
-  return matches;
+  return blocks;
 }
 
-async function wikipediaCard(url: string): Promise<EventCard | null> {
+// "Singles match / " (la nota que seguía se quitó o estaba vacía) → "Singles match"
+const trimSeparators = (text: string) => text.replace(/^(?:\s*\/\s*)+|(?:\s*\/\s*)+$/g, '').trim();
+
+/**
+ * Combates de las tablas de resultados de un artículo. Si hay varias (noches, pre-show), cada
+ * combate lleva el título de la suya en "group"; con night, solo la de esa noche si se distingue.
+ */
+export function parseWikiCard(wikitext: string, night?: number): CardMatch[] {
+  let tables = resultTables(wikitext).map((block) => {
+    const field = (name: string) => block.match(new RegExp(`\\|\\s*${name}\\s*=\\s*([^\\n]*)`, 'i'))?.[1] ?? '';
+    const matches: CardMatch[] = [];
+    for (let n = 1; n <= 40; n++) {
+      const raw = field(`match${n}`);
+      if (!raw) continue;
+      const participants = trimSeparators(cleanWiki(raw));
+      if (!participants) continue;
+      // {{small|…}} suele ser una aclaración útil ("el ganador se clasifica para…"): se conserva el texto
+      const stip = field(`stip${n}`).replace(/\{\{\s*small\s*\|([^{}]*)\}\}/gi, '$1');
+      matches.push({ title: trimSeparators(cleanWiki(stip)) || undefined, participants });
+    }
+    return { caption: trimSeparators(cleanWiki(field('caption'))), matches };
+  });
+  tables = tables.filter((tb) => tb.matches.length);
+  if (night !== undefined) {
+    const own = tables.filter((tb) => new RegExp(`\\bnight ${night}\\b`, 'i').test(tb.caption));
+    if (own.length) tables = own;
+  }
+  const grouped = tables.length > 1;
+  return tables.flatMap((tb) => tb.matches.map((m) => (grouped && tb.caption ? { ...m, group: tb.caption } : m)));
+}
+
+async function wikipediaCard(url: string, night?: number): Promise<EventCard | null> {
   const title = decodeURIComponent(url.split('/wiki/')[1] ?? '').replace(/_/g, ' ');
   if (!title) return null;
   const json = await wikiApi({ action: 'parse', page: title, prop: 'wikitext', redirects: '1' });
-  const matches = parseWikiCard(json.parse?.wikitext ?? '');
+  const matches = parseWikiCard(json.parse?.wikitext ?? '', night);
   return matches.length ? { matches: matches.slice(0, MAX_MATCHES), source: { name: 'Wikipedia', url } } : null;
 }
 
@@ -212,7 +238,14 @@ async function cmllCard(weeklyId: string, date: string): Promise<EventCard | nul
 
 async function resolve(show: Show): Promise<EventCard | null> {
   const weekly = show.id.replace(/-\d{4}-\d{2}-\d{2}$/, '');
+  const wikiUrl = show.url?.includes('wikipedia.org/wiki/') ? show.url : undefined;
   if (show.kind === 'weekly') {
+    // Semanal convertido en evento especial (p. ej. "Dynamite: Grand Slam France"): su artículo
+    // de Wikipedia trae la cartelera completa; si aún no la tiene, la fuente habitual
+    if (wikiUrl) {
+      const card = await wikipediaCard(wikiUrl, show.night).catch(() => null);
+      if (card) return card;
+    }
     if (weekly === 'dynamite' || weekly === 'collision') {
       return aewCard(weekly === 'dynamite' ? 'Dynamite' : 'Collision', show.eventDate);
     }
@@ -220,13 +253,13 @@ async function resolve(show: Show): Promise<EventCard | null> {
     return null;
   }
   if (show.id.startsWith('njpw-')) return njpwCard(show.id.slice(5));
-  if (show.url?.includes('wikipedia.org/wiki/')) return wikipediaCard(show.url);
+  if (wikiUrl) return wikipediaCard(wikiUrl, show.night);
   return null;
 }
 
 /** Cartelera de un show (con caché de 30 min). null si ninguna fuente la publica. */
 export async function loadCard(show: Show): Promise<EventCard | null> {
-  const hit = cache.get(show.id);
+  const hit = cache.get(`${show.id}:${show.night ?? ''}`);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.card;
   let card: EventCard | null = null;
   try {
@@ -235,7 +268,7 @@ export async function loadCard(show: Show): Promise<EventCard | null> {
     console.warn(`[card] ${show.id}:`, err instanceof Error ? err.message : err);
     if (hit) return hit.card; // si la fuente falla, la última copia buena
   }
-  cache.set(show.id, { at: Date.now(), card });
+  cache.set(`${show.id}:${show.night ?? ''}`, { at: Date.now(), card });
   if (cache.size > 300) cache.delete(cache.keys().next().value as string);
   return card;
 }

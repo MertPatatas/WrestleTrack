@@ -90,7 +90,13 @@ export interface Show {
   image?: string; // cartel o imagen promocional del evento
   tapedOn?: string; // 'YYYY-MM-DD' del evento en que se grabó, si se emite otro día
   auto?: boolean; // detectado automáticamente (Wikipedia)
+  special?: boolean; // semanal que es a la vez un evento especial (p. ej. "Dynamite: Grand Slam France")
   venue?: string; // recinto y/o ciudad
   broadcast?: string; // cadena o plataforma
   note?: string;
+}
+
+/** Evento especial (PLE, gran evento o semanal convertido en especial). */
+export function isSpecial(show: Pick<Show, 'kind' | 'special'>): boolean {
+  return show.kind !== 'weekly' || Boolean(show.special);
 }

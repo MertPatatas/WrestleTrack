@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { Show } from '../data/types';
+import { isSpecial, type Show } from '../data/types';
 import { useT } from '../i18n/SettingsProvider';
 import type { Formatter } from '../lib/dates';
 import { PromotionBadge } from './PromotionBadge';
@@ -23,7 +23,7 @@ export function ShowRow({
   // Sin hora confirmada no se puede saber si está en directo ni cuántas horas faltan
   const status = show.timeTbd ? { live: false, text: null } : fmt.status(show.startsAt, show.endsAt, now);
   const time = show.timeTbd ? null : fmt.time(show.startsAt);
-  const special = show.kind !== 'weekly';
+  const special = isSpecial(show);
   const details = [show.venue, show.broadcast].filter(Boolean).join(' · ');
   const name = show.night ? `${show.name} · ${t('shows.night', { n: show.night })}` : show.name;
 

@@ -9,6 +9,7 @@ import { PageHeader } from '../components/PageHeader';
 import { SampleNotice } from '../components/SampleNotice';
 import { ShowRow } from '../components/ShowRow';
 import { StorylineCard } from '../components/StorylineCard';
+import { isSpecial } from '../data/types';
 import { useAppData } from '../data/useAppData';
 import { useNews } from '../data/useNews';
 import { useT } from '../i18n/SettingsProvider';
@@ -39,7 +40,7 @@ export function HomeView() {
   }, []);
   const upcoming = data ? data.shows.filter((s) => new Date(s.endsAt).getTime() > now).slice(0, 3) : [];
   // El próximo PPV/PLE que aún no ha terminado, para la tarjeta destacada
-  const nextBig = data?.shows.find((s) => s.kind !== 'weekly' && new Date(s.endsAt).getTime() > now);
+  const nextBig = data?.shows.find((s) => isSpecial(s) && new Date(s.endsAt).getTime() > now);
 
   return (
     <>

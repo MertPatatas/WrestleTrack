@@ -11,7 +11,7 @@ import { PromotionBadge } from '../components/PromotionBadge';
 import { SampleNotice } from '../components/SampleNotice';
 import { StorylineCard } from '../components/StorylineCard';
 import { CATCHUP_TABS, type CatchUpTab } from '../data/catchup';
-import type { AnalysisVideo, PromotionId, Show } from '../data/types';
+import { isSpecial, type AnalysisVideo, type PromotionId, type Show } from '../data/types';
 import { useAppData } from '../data/useAppData';
 import { useRecaps } from '../data/useRecaps';
 import { useSettings } from '../i18n/SettingsProvider';
@@ -40,7 +40,7 @@ function showInfo(id: string, fallback: { name: string; promotion: PromotionId; 
     name: show.night ? `${show.name} · ${nightLabel(show.night)}` : show.name,
     promotion: show.promotion,
     day: showDayKey(show, fmt),
-    special: show.kind !== 'weekly',
+    special: isSpecial(show),
     sortKey: show.startsAt,
   };
 }

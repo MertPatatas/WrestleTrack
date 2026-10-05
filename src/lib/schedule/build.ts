@@ -6,7 +6,7 @@ import {
   type SpecialEvent,
   type WeeklyShow,
 } from '../../data/schedule';
-import type { Show } from '../../data/types';
+import { isSpecial, type Show } from '../../data/types';
 import { DAY_MS, addDays, daysBetween, weekdayOf, zonedTimeToUtc } from './time';
 
 const DEFAULT_SPECIAL_MIN = 180;
@@ -14,6 +14,7 @@ const DEFAULT_SPECIAL_MIN = 180;
 export interface ScheduleOptions {
   pastDays?: number;
   futureDays?: number;
+  specialDays?: number; // horizonte de los eventos especiales (por defecto, futureDays)
   episodes?: AutoEpisode[]; // episodios semanales publicados por las fuentes (TVmaze)
   autoEvents?: SpecialEvent[]; // eventos especiales de las fuentes, de más a menos fiable
   showImages?: Record<string, string>; // póster de cada show semanal (TVmaze)
@@ -91,7 +92,7 @@ function weeklyToShow(
 /** Shows (semanales + especiales) entre hace pastDays y dentro de futureDays, ordenados por fecha. */
 export function buildSchedule(
   now: number = Date.now(),
-  { pastDays = 14, futureDays = 90, episodes = [], autoEvents = [], showImages = {} }: ScheduleOptions = {},
+  { pastDays = 14, futureDays = 90, specialDays, episodes = [], autoEvents = [], showImages = {} }: ScheduleOptions = {},
 ): Show[] {
   const from = now - pastDays * DAY_MS;
   const to = now + futureDays * DAY_MS;
@@ -165,11 +166,23 @@ export function buildSchedule(
       existing.url ??= e.url;
       existing.image ??= e.image;
       existing.venue ??= e.venue;
+    } else {
+      // Semanal que es a la vez un evento especial ("Dynamite: Grand Slam France"): se marca como
+      // especial y se queda con el artículo (cartelera) y el cartel del evento
+      existing.special = true;
+      existing.url ??= e.url;
+      if (e.image) existing.image = e.image;
+      existing.venue ??= e.venue;
     }
   }
 
+  // Los eventos especiales se anuncian con meses de antelación: llegan más lejos que los semanales
+  const toSpecial = now + Math.max(futureDays, specialDays ?? futureDays) * DAY_MS;
   return shows
-    .filter((s) => new Date(s.endsAt).getTime() >= from && new Date(s.startsAt).getTime() <= to)
+    .filter((s) => {
+      const limit = isSpecial(s) ? toSpecial : to;
+      return new Date(s.endsAt).getTime() >= from && new Date(s.startsAt).getTime() <= limit;
+    })
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 }
 

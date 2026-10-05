@@ -7,7 +7,7 @@ import { VideoCard } from '../components/catchup/VideoCard';
 import { HeroWithPoster } from '../components/NextEventHero';
 import { PromoLogo } from '../components/PromoLogo';
 import { REGIONS, detectRegion, whereToWatch, type Region } from '../data/broadcast';
-import type { Show } from '../data/types';
+import { isSpecial, type Show } from '../data/types';
 import { useAppData } from '../data/useAppData';
 import { useRecaps } from '../data/useRecaps';
 import { useSettings } from '../i18n/SettingsProvider';
@@ -34,6 +34,7 @@ function useCard(show: Show | undefined, ended: boolean): CardState | null {
     const params = new URLSearchParams({ id: show.id, kind: show.kind, promotion: show.promotion, date: show.eventDate });
     // La API solo necesita (y solo acepta) el enlace cuando la cartelera sale de Wikipedia
     if (show.url?.startsWith('https://en.wikipedia.org/wiki/')) params.set('url', show.url);
+    if (show.night) params.set('night', String(show.night));
     let alive = true;
     setState({ status: 'loading' });
     fetch(`/api/card?${params}`)
@@ -111,7 +112,7 @@ export function ShowDetailView({ id }: { id: string }) {
     );
   }
 
-  const special = show.kind !== 'weekly';
+  const special = isSpecial(show);
   const name = show.night ? `${show.name} · ${t('shows.night', { n: show.night })}` : show.name;
   const status = show.timeTbd ? null : fmt.status(show.startsAt, show.endsAt, now);
   const time = show.timeTbd ? t('shows.tbdLong') : `${fmt.time(show.startsAt)}${show.timeApprox ? ` (${t('shows.approx')})` : ''}`;
@@ -243,10 +244,16 @@ export function ShowDetailView({ id }: { id: string }) {
               {card.card.note ? <p className="small show-note">{card.card.note}</p> : null}
               {card.card.matches.length ? (
                 <ol className="match-list">
-                  {card.card.matches.map((m, i) => (
-                    <li key={i}>
-                      {m.title ? <span className="match-title">{m.title}</span> : null}
+                  {card.card.matches.map((m, i, all) => (
+                    <li key={i} className={m.group && m.group !== all[i - 1]?.group ? 'match-group-start' : undefined}>
+                      {/* Parte del evento (noche, pre-show) al empezar cada una */}
+                      {m.group && m.group !== all[i - 1]?.group ? <span className="match-group">{m.group}</span> : null}
+                      {m.title ? <span className="match-title">{m.title.split(' / ')[0]}</span> : null}
                       <span className="match-participants">{m.participants}</span>
+                      {/* Aclaraciones tras el tipo de combate ("el ganador se clasifica para…") */}
+                      {m.title?.includes(' / ') ? (
+                        <span className="muted small">{m.title.split(' / ').slice(1).join(' · ')}</span>
+                      ) : null}
                     </li>
                   ))}
                 </ol>
