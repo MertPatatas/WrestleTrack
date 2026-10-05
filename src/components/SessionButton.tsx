@@ -63,7 +63,7 @@ export function SessionButton() {
       >
         {initial}
       </button>
-      <div id={menuId} className="session-dropdown" role="menu" data-open={open} hidden={!open}>
+      <div id={menuId} className="session-dropdown" role="menu" data-open={open} inert={!open}>
         {user.email ? <p className="session-email">{user.email}</p> : null}
         <Link href="/perfil" role="menuitem" className="session-item" onClick={() => setOpen(false)}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

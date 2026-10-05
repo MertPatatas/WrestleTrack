@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatedDetails } from '../components/AnimatedDetails';
 import { RecapResults } from '../components/catchup/RecapResults';
 import { VideoCard } from '../components/catchup/VideoCard';
 import { FilterChips, type Filter } from '../components/FilterChips';
@@ -189,16 +190,21 @@ export function CatchUpView({ initialTab }: { initialTab: CatchUpTab }) {
               const matches = recap.items.filter((i) => !i.segment).length;
               const videos = videoCount.get(recap.showId) ?? 0;
               return (
-                <details key={recap.showId} className="card recap-card">
-                  <summary>
-                    <ShowHeading info={info} fmt={fmt!} now={now} />
-                    <span className="recap-toggle">
-                      <span className="recap-toggle-label">{t('catchup.showResults')}</span> ({matches})
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
-                    </span>
-                  </summary>
+                <AnimatedDetails
+                  key={recap.showId}
+                  className="card recap-card"
+                  summary={
+                    <>
+                      <ShowHeading info={info} fmt={fmt!} now={now} />
+                      <span className="recap-toggle">
+                        <span className="recap-toggle-label">{t('catchup.showResults')}</span> ({matches})
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </span>
+                    </>
+                  }
+                >
                   <RecapResults recap={recap} />
                   <div className="recap-links">
                     {shows.has(recap.showId) ? (
@@ -212,7 +218,7 @@ export function CatchUpView({ initialTab }: { initialTab: CatchUpTab }) {
                       </button>
                     ) : null}
                   </div>
-                </details>
+                </AnimatedDetails>
               );
             })}
           </div>

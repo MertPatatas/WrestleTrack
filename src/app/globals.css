@@ -1328,7 +1328,7 @@ button {
 .recap-card > summary::-webkit-details-marker {
   display: none;
 }
-.recap-card[open] > summary {
+.recap-card[open]:not([data-closing]) > summary {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line);
 }
@@ -1360,7 +1360,7 @@ button {
 .recap-toggle svg {
   transition: transform 0.15s ease;
 }
-.recap-card[open] .recap-toggle svg {
+.recap-card[open]:not([data-closing]) .recap-toggle svg {
   transform: rotate(180deg);
 }
 .recap-list {
@@ -1600,23 +1600,25 @@ button.session-avatar[aria-expanded='true'] {
   border-radius: var(--radius-md);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   transform-origin: top right;
-  opacity: 1;
-  transform: none;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-6px) scale(0.97);
+  pointer-events: none;
+  /* Al cerrar, la visibilidad cambia al final para que se vea el fundido */
   transition:
     opacity 0.16s ease,
     transform 0.16s ease,
-    display 0.16s allow-discrete;
+    visibility 0s linear 0.16s;
 }
-.session-dropdown[hidden] {
-  display: none;
-  opacity: 0;
-  transform: translateY(-6px) scale(0.97);
-}
-@starting-style {
-  .session-dropdown:not([hidden]) {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.97);
-  }
+.session-dropdown[data-open='true'] {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    visibility 0s;
 }
 .session-email {
   padding: 8px 10px 10px;
@@ -1660,26 +1662,6 @@ button.session-avatar[aria-expanded='true'] {
 }
 
 /* ---------- Animaciones generales ---------- */
-
-/* Permite animar hasta "auto" (desplegables) en los navegadores que lo admiten */
-:root {
-  interpolate-size: allow-keywords;
-}
-
-/* Desplegables <details>: se abren y cierran deslizando */
-details::details-content {
-  block-size: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition:
-    block-size 0.28s ease,
-    opacity 0.2s ease,
-    content-visibility 0.28s allow-discrete;
-}
-details[open]::details-content {
-  block-size: auto;
-  opacity: 1;
-}
 
 /* Cada página (y cada pestaña o lista nueva) entra con un leve fundido */
 .page > *,
@@ -1734,10 +1716,14 @@ details[open]::details-content {
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
-  *::after,
-  details::details-content {
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Contenido de los desplegables animados (AnimatedDetails) */
+.details-body {
+  display: block;
 }
