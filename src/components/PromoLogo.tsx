@@ -7,7 +7,7 @@ import type { BrandId } from '../data/brands';
 // scale: los logos redondos o con mucho detalle se ven más grandes para que se reconozcan a tamaño pequeño
 const IMAGE_LOGOS: Partial<Record<BrandId, { src: string; ratio: number; scale?: number }>> = {
   wwe: { src: '/logos/wwe.svg', ratio: 219 / 200 },
-  raw: { src: '/logos/raw.webp', ratio: 295 / 160, scale: 1.3 },
+  raw: { src: '/logos/raw.webp', ratio: 435 / 160, scale: 1.1 },
   smackdown: { src: '/logos/smackdown.webp', ratio: 195 / 160, scale: 1.15 },
   nxt: { src: '/logos/nxt.webp', ratio: 427 / 160 },
   aew: { src: '/logos/aew.svg', ratio: 180 / 64.8 },

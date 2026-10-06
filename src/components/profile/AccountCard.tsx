@@ -5,9 +5,9 @@ import { useState } from 'react';
 import { useSettings } from '../../i18n/SettingsProvider';
 import { currentSubscription } from '../../lib/notifications/client';
 
-// Cuenta con la que se ha iniciado sesión: cerrar sesión o eliminarla
+// Cuenta con la que se ha iniciado sesión: administración (si lo es), cerrar sesión o eliminarla
 export function AccountCard() {
-  const { t, user, sync, syncError, signOut } = useSettings();
+  const { t, user, sync, syncError, signOut, isAdmin } = useSettings();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(false);
 
@@ -42,6 +42,12 @@ export function AccountCard() {
               {sync === 'error' && syncError ? <span className="error-detail">{syncError}</span> : null}
             </p>
             <div className="button-row">
+              {/* Solo para las cuentas de administrador (ADMIN_EMAILS en el servidor) */}
+              {isAdmin ? (
+                <Link href="/admin" className="button">
+                  {t('session.admin')}
+                </Link>
+              ) : null}
               <button type="button" className="button button--ghost" onClick={() => void signOut()} disabled={deleting}>
                 {t('account.signOut')}
               </button>
