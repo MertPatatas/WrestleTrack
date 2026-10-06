@@ -41,7 +41,8 @@ export function WrestlerAvatar({ name, photo, size = 44 }: { name: string; photo
 /** Caras de cada lado de un combate, con "VS" entre medias. Nada si ningún participante tiene foto. */
 export function MatchFaces({ sides, photos }: { sides: MatchSide[]; photos: Photos }) {
   const any = sides.some((s) => s.people.some((p) => photos[personKey(p.name)]));
-  if (!any) return null;
+  // Sin fotos, o una batalla real con decenas de participantes: solo el texto
+  if (!any || sides.length > 6) return null;
   const size = sides.length > 2 ? 36 : 50;
   return (
     <div className="match-faces" aria-hidden="true">

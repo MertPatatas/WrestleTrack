@@ -1,5 +1,7 @@
 import 'server-only';
 import type { MatchSide, Person, Show } from '../../data/types';
+import { matchShow } from '../recaps/match';
+import { fetchPreviewCard, listPreviewArticles } from '../recaps/solowrestling';
 import { isPersonName, peopleFromText, sidesFromText } from '../wrestlers/people';
 import { api as wikiApi, clean as cleanWiki } from './sources/wikipedia';
 
@@ -15,6 +17,7 @@ export interface CardMatch {
   participants: string; // "A vs. B"
   group?: string; // parte del evento si tiene varias ("Night 1", "Pre-show"...)
   sides?: MatchSide[]; // quién está en cada lado (para las fotos)
+  segment?: boolean; // segmento anunciado, no un combate ("X hará una aparición")
 }
 
 export interface EventCard {
@@ -232,7 +235,11 @@ async function aewCard(show: 'Dynamite' | 'Collision', date: string): Promise<Ev
 
 // ---------------------------------------------------------------- CMLL (Arena México)
 
-const CMLL_SLUGS: Record<string, string> = { 'cmll-viernes': 'viernes-espectacular', 'cmll-domingo': 'domingo-familiar' };
+const CMLL_SLUGS: Record<string, string> = {
+  'cmll-martes': 'martes-arena-mexico',
+  'cmll-viernes': 'viernes-espectacular',
+  'cmll-domingo': 'domingo-familiar',
+};
 
 async function cmllCard(weeklyId: string, date: string): Promise<EventCard | null> {
   const slug = CMLL_SLUGS[weeklyId];
@@ -242,9 +249,10 @@ async function cmllCard(weeklyId: string, date: string): Promise<EventCard | nul
   ) as { content: { rendered: string }; modified: string; link: string }[];
   const post = posts[0];
   if (!post) return null;
-  // La web solo tiene la cartelera de la próxima función: tiene que ser de los 8 días anteriores
-  const ageDays = (Date.parse(`${date}T12:00:00Z`) - Date.parse(`${post.modified}Z`)) / 86_400_000;
-  if (ageDays < 0 || ageDays > 8) return null;
+  // La web solo tiene la cartelera de la próxima función: tiene que haberse publicado en los 8 días
+  // anteriores (o el mismo día: las funciones son de noche en CDMX, ya de madrugada en UTC)
+  const ageDays = (Date.parse(`${date}T12:00:00Z`) + 86_400_000 - Date.parse(`${post.modified}Z`)) / 86_400_000;
+  if (ageDays < 0 || ageDays > 9) return null;
 
   const matches: CardMatch[] = [];
   for (const p of post.content.rendered.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)) {
@@ -264,6 +272,25 @@ async function cmllCard(weeklyId: string, date: string): Promise<EventCard | nul
   return matches.length ? { matches: matches.slice(0, MAX_MATCHES), source: { name: 'CMLL', url: post.link } } : null;
 }
 
+// ---------------------------------------------------------------- Previas de Solowrestling
+
+/** "Previa WWE NXT 6 de octubre de 2026": cartelera de un show semanal (en español). */
+async function solowrestlingCard(show: Show): Promise<EventCard | null> {
+  const day = Date.parse(`${show.eventDate}T12:00:00Z`);
+  // Se compara con el propio show (con su fecha, sin hora: basta para los semanales)
+  const target = { ...show, startsAt: new Date(day).toISOString(), endsAt: new Date(day + 6 * 3600_000).toISOString() } as Show;
+  const preview = (await listPreviewArticles())
+    .filter((a) => matchShow(a.title, a.publishedAt, [target]))
+    .sort((a, b) => b.publishedAt - a.publishedAt)[0];
+  if (!preview) return null;
+  const items = await fetchPreviewCard(preview.url);
+  if (!items.length) return null;
+  return {
+    matches: items.map((i) => ({ title: i.title, participants: i.participants, ...(i.segment ? { segment: true } : {}) })),
+    source: { name: 'Solowrestling', url: preview.url },
+  };
+}
+
 // ---------------------------------------------------------------- Selección de fuente
 
 async function resolve(show: Show): Promise<EventCard | null> {
@@ -276,11 +303,13 @@ async function resolve(show: Show): Promise<EventCard | null> {
       const card = await wikipediaCard(wikiUrl, show.night).catch(() => null);
       if (card) return card;
     }
-    if (weekly === 'dynamite' || weekly === 'collision') {
-      return aewCard(weekly === 'dynamite' ? 'Dynamite' : 'Collision', show.eventDate);
-    }
     if (weekly.startsWith('cmll-')) return cmllCard(weekly, show.eventDate);
-    return null;
+    if (weekly === 'dynamite' || weekly === 'collision') {
+      const card = await aewCard(weekly === 'dynamite' ? 'Dynamite' : 'Collision', show.eventDate).catch(() => null);
+      if (card) return card;
+    }
+    // Raw, SmackDown, NXT, AAA (y AEW si su blog aún no tiene la previa): previa de Solowrestling
+    return solowrestlingCard(show);
   }
   if (show.id.startsWith('njpw-')) return njpwCard(show.id.slice(5));
   if (wikiUrl) return wikipediaCard(wikiUrl, show.night);

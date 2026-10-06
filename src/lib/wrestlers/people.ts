@@ -39,7 +39,9 @@ export function peopleFromText(side: string): Person[] {
   // Equipo con sus miembros entre paréntesis; lo que va antes del equipo también cuenta
   // ("Ricky Saints y War Raiders (Ivar y Erik)" → Ricky Saints, Ivar, Erik)
   const team = text.match(/^(.+?)\s*\(([^()]+)\)\s*$/);
-  const names = team ? [...splitNames(team[1]).slice(0, -1), ...splitNames(team[2])] : splitNames(text);
+  // (antes del equipo solo se separa por comas, "&" o " y ": "Hank And Tank" es un nombre de equipo)
+  const before = team ? team[1].split(/\s*(?:,|&|\s+y\s+)\s*/).map((n) => n.trim()).filter(isPersonName) : [];
+  const names = team ? [...before.slice(0, -1), ...splitNames(team[2])] : splitNames(text);
   return names.slice(0, MAX_PER_SIDE).map((name) => ({ name }));
 }
 

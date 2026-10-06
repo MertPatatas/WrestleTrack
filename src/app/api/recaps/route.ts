@@ -18,8 +18,11 @@ export async function GET() {
     } else if (await recapsStale()) {
       after(() => refreshRecapsNow().catch((err) => console.warn('[recaps] revisión fallida:', err)));
     }
-    // Fotos de los luchadores: las guardadas y unas pocas nuevas por petición (el resto, en las siguientes)
-    const photos = await photosFor(recapPeople(data.recaps), { maxNew: 12 }).catch(() => ({}));
+    // Fotos de los luchadores: se responde ya con las guardadas; las que falten, después de responder
+    // (y en la revisión horaria)
+    const people = recapPeople(data.recaps);
+    const photos = await photosFor(people, { maxNew: 0 }).catch(() => ({}));
+    after(() => photosFor(people, { maxNew: 16 }).then(() => undefined).catch(() => undefined));
     return NextResponse.json({ ...data, photos }, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=1800' },
     });

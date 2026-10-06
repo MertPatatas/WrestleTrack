@@ -44,9 +44,22 @@ const articleId = (url: string) => url.match(/\/new\/(\d+)/)?.[1] ?? url;
 
 /** Artículos de resultados recientes: sitemap de noticias (unos 5 días) + RSS (los 50 últimos). */
 export async function listResultArticles(): Promise<ArticleRef[]> {
+  return listArticles(isResultsTitle);
+}
+
+/** Previas ("Previa WWE NXT 6 de octubre de 2026: cartelera y horarios"), con caché de 20 min. */
+let previews: { at: number; list: ArticleRef[] } | null = null;
+export async function listPreviewArticles(): Promise<ArticleRef[]> {
+  if (previews && Date.now() - previews.at < 20 * 60_000) return previews.list;
+  const list = await listArticles((title) => /^previa\b/i.test(title.trim()));
+  previews = { at: Date.now(), list };
+  return list;
+}
+
+async function listArticles(accept: (title: string) => boolean): Promise<ArticleRef[]> {
   const found = new Map<string, ArticleRef>();
   const add = (title: string, url: string | undefined, date: string | undefined) => {
-    if (!url || !title || !isResultsTitle(title)) return;
+    if (!url || !title || !accept(title)) return;
     const publishedAt = Date.parse(date ?? '');
     if (!Number.isFinite(publishedAt)) return;
     found.set(articleId(url), { title, url: url.replace('://solowrestling.com', '://www.solowrestling.com'), publishedAt });
@@ -175,6 +188,28 @@ export async function fetchArticleText(url: string, maxChars = 24_000): Promise<
     .filter((l) => l.length > 2 && !/^Noticia relacionada$|^Imagen:/i.test(l))
     .join('\n')
     .slice(0, maxChars);
+}
+
+/**
+ * Cartelera de una previa: el apartado "## Cartelera …", una viñeta por combate
+ * ("**Título:** A vs. B" o "A vs. B") o por segmento anunciado (sin "vs.").
+ */
+export async function fetchPreviewCard(url: string): Promise<{ title?: string; participants: string; segment?: boolean }[]> {
+  const lines = toLines(await getText(url));
+  const start = lines.findIndex((l) => /^## Cartelera\b/i.test(l));
+  if (start < 0) return [];
+  const items: { title?: string; participants: string; segment?: boolean }[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (line.startsWith('## ')) break;
+    if (!line.startsWith('* ')) continue;
+    // "* **Combate por …:** A vs. B" (los dos puntos pueden ir dentro o fuera de la negrita)
+    const titled = line.match(/^\* \*\*(.+?):?\*\*:?\s*(.+)$/);
+    const title = titled ? plain(titled[1]).replace(/:$/, '') : undefined;
+    const text = plain(titled ? titled[2] : line);
+    if (text.length < 4) continue;
+    items.push(/\svs\.?\s/i.test(text) ? { title, participants: text } : { title, participants: text, segment: true });
+  }
+  return items.slice(0, MAX_ITEMS);
 }
 
 /** Resultados de un artículo de Solowrestling (vacío si no se reconoce el formato). */

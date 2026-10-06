@@ -253,7 +253,7 @@ export function ShowDetailView({ id }: { id: string }) {
                       {m.group && m.group !== all[i - 1]?.group ? <span className="match-group">{m.group}</span> : null}
                       {m.title ? <span className="match-title">{m.title.split(' / ')[0]}</span> : null}
                       {m.sides ? <MatchFaces sides={m.sides} photos={card.photos} /> : null}
-                      <span className="match-participants">{m.participants}</span>
+                      <span className={m.segment ? 'recap-segment-text' : 'match-participants'}>{m.participants}</span>
                       {/* Aclaraciones tras el tipo de combate ("el ganador se clasifica para…") */}
                       {m.title?.includes(' / ') ? (
                         <span className="muted small">{m.title.split(' / ').slice(1).join(' · ')}</span>

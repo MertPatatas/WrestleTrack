@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { after, NextResponse, type NextRequest } from 'next/server';
 import type { Show } from '../../../data/types';
 import { loadCard } from '../../../lib/schedule/card';
 import { photosFor } from '../../../lib/wrestlers/photos';
@@ -35,9 +35,11 @@ export async function GET(request: NextRequest) {
 
   const show = { id, kind, promotion, eventDate: date, url, night, name: '' } as unknown as Show;
   const card = await loadCard(show);
-  // Fotos de los luchadores (las que falten se buscan ahora y se guardan para las siguientes veces)
+  // Fotos de los luchadores: se responde ya con las guardadas; las que falten se buscan después de
+  // responder (y la revisión horaria prepara las carteleras de los próximos días)
   const people = (card?.matches ?? []).flatMap((m) => (m.sides ?? []).flatMap((side) => side.people));
-  const photos = people.length ? await photosFor(people).catch(() => ({})) : {};
+  const photos = people.length ? await photosFor(people, { maxNew: 0 }).catch(() => ({})) : {};
+  if (people.length) after(() => photosFor(people, { maxNew: 16 }).then(() => undefined).catch(() => undefined));
   return NextResponse.json(
     { card, photos },
     // La cartelera es pública: la CDN puede guardarla 30 min
