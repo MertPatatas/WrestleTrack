@@ -15,14 +15,19 @@
   --font-body: var(--font-barlow), system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-display: var(--font-barlow-condensed), 'Arial Narrow', system-ui, sans-serif;
 
-  /* Color de cada promoción (se usa con las clases .brand-<id> → var(--brand)) */
-  --brand-wwe: #d71920;
+  /* Color de cada promoción o marca (se usa con las clases .brand-<id> → var(--brand)).
+     WWE: los PLE en rojo claro; Raw, SmackDown y NXT con el de su marca. */
+  --brand-wwe: #f0474d;
+  --brand-raw: #a3141b;
+  --brand-smackdown: #2563d6;
+  --brand-nxt: #c3c7ce;
   --brand-aew: #c9a24a;
-  --brand-cmll: #2f6fd6;
+  --brand-cmll: #2f9e55;
   --brand-aaa: #e03a3e;
-  --brand-njpw: #e60012;
+  --brand-njpw: #f07c1a;
   --brand-other: #9a9a9e;
   --brand: var(--gold);
+  /* --brand-fill (relleno de las franjas): sin definir = el color de la marca; CMLL mezcla verde y naranja */
 }
 
 .brand-wwe {
@@ -33,6 +38,16 @@
 }
 .brand-cmll {
   --brand: var(--brand-cmll);
+  --brand-fill: linear-gradient(180deg, #2f9e55 0%, #f08a24 100%);
+}
+.brand-raw {
+  --brand: var(--brand-raw);
+}
+.brand-smackdown {
+  --brand: var(--brand-smackdown);
+}
+.brand-nxt {
+  --brand: var(--brand-nxt);
 }
 .brand-aaa {
   --brand: var(--brand-aaa);
@@ -346,17 +361,6 @@ button {
   letter-spacing: 0.02em;
   line-height: 1;
 }
-.promo-wordmark--cmll {
-  color: #fff;
-  text-shadow: 0.06em 0.06em 0 var(--brand-cmll);
-}
-.promo-wordmark--njpw {
-  color: #fff;
-  font-style: normal;
-  letter-spacing: 0.06em;
-  border-bottom: 0.14em solid var(--brand-njpw);
-  padding-bottom: 0.05em;
-}
 .promo-wordmark--other {
   color: var(--silver);
   font-style: normal;
@@ -472,7 +476,7 @@ button {
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
-  background: var(--brand);
+  background: var(--brand-fill, var(--brand));
 }
 .show-row--special {
   background: linear-gradient(100deg, color-mix(in srgb, var(--brand) 16%, var(--surface)) 0%, var(--surface) 55%);

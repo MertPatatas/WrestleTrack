@@ -8,6 +8,7 @@ import { HeroWithPoster } from '../components/NextEventHero';
 import { PromoLogo } from '../components/PromoLogo';
 import { REGIONS, detectRegion, whereToWatch, type Region } from '../data/broadcast';
 import { isSpecial, type Show } from '../data/types';
+import { brandOf } from '../data/brands';
 import { useAppData } from '../data/useAppData';
 import { useRecaps } from '../data/useRecaps';
 import { useSettings } from '../i18n/SettingsProvider';
@@ -126,11 +127,11 @@ export function ShowDetailView({ id }: { id: string }) {
         ← {t('detail.back')}
       </Link>
 
-      <header className={`hero hero--static brand-${show.promotion}`}>
+      <header className={`hero hero--static brand-${brandOf(show)}`}>
         <HeroWithPoster image={show.image}>
           {special ? <p className="hero-kicker">★ {t('shows.special')}</p> : null}
           <div className="hero-logo">
-            <PromoLogo id={show.promotion} height={40} />
+            <PromoLogo id={brandOf(show)} height={40} />
           </div>
           <h1 className="hero-title">{name}</h1>
           {status?.text || ended ? (

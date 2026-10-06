@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { brandOf } from '../data/brands';
 import { isSpecial, type Show } from '../data/types';
 import { useT } from '../i18n/SettingsProvider';
 import type { Formatter } from '../lib/dates';
@@ -24,6 +25,7 @@ export function ShowRow({
   const status = show.timeTbd ? { live: false, text: null } : fmt.status(show.startsAt, show.endsAt, now);
   const time = show.timeTbd ? null : fmt.time(show.startsAt);
   const special = isSpecial(show);
+  const brand = brandOf(show);
   const details = [show.venue, show.broadcast].filter(Boolean).join(' · ');
   const name = show.night ? `${show.name} · ${t('shows.night', { n: show.night })}` : show.name;
 
@@ -49,7 +51,7 @@ export function ShowRow({
   return (
     <Link
       href={`/shows/${encodeURIComponent(show.id)}`}
-      className={`show-row show-row--link brand-${show.promotion}${special ? ' show-row--special' : ''}${status.live ? ' show-row--live' : ''}`}
+      className={`show-row show-row--link brand-${brand}${special ? ' show-row--special' : ''}${status.live ? ' show-row--live' : ''}`}
     >
       {left}
       <div className="show-info">
@@ -73,7 +75,7 @@ export function ShowRow({
         ) : null}
       </div>
       <div className="show-side">
-        <PromotionBadge id={show.promotion} />
+        <PromotionBadge id={brand} />
         {status.text ? (
           <span className={status.live ? 'show-live' : 'muted small'}>{status.text}</span>
         ) : null}

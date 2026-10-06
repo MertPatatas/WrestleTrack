@@ -1,18 +1,26 @@
-import type { PromotionId } from '../data/types';
+import type { BrandId } from '../data/brands';
 
-// Logo de cada promoción.
-// WWE, AEW y AAA: logotipos de dominio público (Wikimedia Commons), en public/logos.
-// CMLL y NJPW no tienen logo libre: se muestra un rótulo tipográfico con sus colores.
+// Logo de cada promoción o marca (Raw, SmackDown y NXT dentro de WWE), en public/logos.
+// WWE, AEW y AAA vienen de Wikimedia Commons; el resto, recortados y reducidos a 160 px de alto.
 // Las marcas pertenecen a sus propietarios; aquí solo identifican cada promoción.
 
-const IMAGE_LOGOS: Partial<Record<PromotionId, { src: string; ratio: number }>> = {
+// scale: los logos redondos o con mucho detalle se ven más grandes para que se reconozcan a tamaño pequeño
+const IMAGE_LOGOS: Partial<Record<BrandId, { src: string; ratio: number; scale?: number }>> = {
   wwe: { src: '/logos/wwe.svg', ratio: 219 / 200 },
+  raw: { src: '/logos/raw.webp', ratio: 295 / 160, scale: 1.3 },
+  smackdown: { src: '/logos/smackdown.webp', ratio: 195 / 160, scale: 1.15 },
+  nxt: { src: '/logos/nxt.webp', ratio: 427 / 160 },
   aew: { src: '/logos/aew.svg', ratio: 180 / 64.8 },
   aaa: { src: '/logos/aaa.png', ratio: 1000 / 616 },
+  cmll: { src: '/logos/cmll.webp', ratio: 290 / 135, scale: 1.35 },
+  njpw: { src: '/logos/njpw.webp', ratio: 161 / 160, scale: 1.45 },
 };
 
-const NAMES: Record<PromotionId, string> = {
+const NAMES: Record<BrandId, string> = {
   wwe: 'WWE',
+  raw: 'WWE Raw',
+  smackdown: 'WWE SmackDown',
+  nxt: 'WWE NXT',
   aew: 'AEW',
   cmll: 'CMLL',
   aaa: 'AAA',
@@ -20,18 +28,19 @@ const NAMES: Record<PromotionId, string> = {
   other: 'General',
 };
 
-export function PromoLogo({ id, height = 18, label }: { id: PromotionId; height?: number; label?: string }) {
+export function PromoLogo({ id, height = 18, label }: { id: BrandId; height?: number; label?: string }) {
   const image = IMAGE_LOGOS[id];
   const alt = label ?? NAMES[id];
   if (image) {
+    const h = Math.round(height * (image.scale ?? 1));
     return (
       <img
-        className="promo-logo"
+        className={`promo-logo promo-logo--${id}`}
         src={image.src}
         alt={alt}
-        height={height}
-        width={Math.round(height * image.ratio)}
-        style={{ height, width: 'auto' }}
+        height={h}
+        width={Math.round(h * image.ratio)}
+        style={{ height: h, width: 'auto' }}
         loading="lazy"
         decoding="async"
       />
@@ -39,7 +48,7 @@ export function PromoLogo({ id, height = 18, label }: { id: PromotionId; height?
   }
   return (
     <span className={`promo-wordmark promo-wordmark--${id}`} style={{ fontSize: Math.round(height * 0.95) }} aria-label={alt}>
-      {id === 'other' ? alt : NAMES[id]}
+      {alt}
     </span>
   );
 }

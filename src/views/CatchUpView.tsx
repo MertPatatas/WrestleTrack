@@ -10,6 +10,7 @@ import { FilterChips, type Filter } from '../components/FilterChips';
 import { PageHeader } from '../components/PageHeader';
 import { PromotionBadge } from '../components/PromotionBadge';
 import { StorylinesPanel } from '../components/storylines/StorylinesPanel';
+import { brandOf, brandOfId, type BrandId } from '../data/brands';
 import { CATCHUP_TABS, type CatchUpTab } from '../data/catchup';
 import { isSpecial, type AnalysisVideo, type PromotionId, type Show } from '../data/types';
 import { useAppData } from '../data/useAppData';
@@ -25,6 +26,7 @@ interface ShowInfo {
   id: string;
   name: string;
   promotion: PromotionId;
+  brand: BrandId; // logo y color (Raw, SmackDown, NXT dentro de WWE)
   day: string; // 'YYYY-MM-DD'
   special: boolean;
   sortKey: string;
@@ -33,12 +35,21 @@ interface ShowInfo {
 function showInfo(id: string, fallback: { name: string; promotion: PromotionId; eventDate: string }, shows: Map<string, Show>, fmt: Formatter, nightLabel: (n: number) => string): ShowInfo {
   const show = shows.get(id);
   if (!show) {
-    return { id, name: fallback.name, promotion: fallback.promotion, day: fallback.eventDate, special: false, sortKey: fallback.eventDate };
+    return {
+      id,
+      name: fallback.name,
+      promotion: fallback.promotion,
+      brand: brandOfId(id, fallback.promotion, fallback.name),
+      day: fallback.eventDate,
+      special: false,
+      sortKey: fallback.eventDate,
+    };
   }
   return {
     id,
     name: show.night ? `${show.name} · ${nightLabel(show.night)}` : show.name,
     promotion: show.promotion,
+    brand: brandOf(show),
     day: showDayKey(show, fmt),
     special: isSpecial(show),
     sortKey: show.startsAt,
@@ -47,8 +58,8 @@ function showInfo(id: string, fallback: { name: string; promotion: PromotionId; 
 
 function ShowHeading({ info, fmt, now }: { info: ShowInfo; fmt: Formatter; now: number }) {
   return (
-    <div className={`recap-head brand-${info.promotion}`}>
-      <PromotionBadge id={info.promotion} />
+    <div className={`recap-head brand-${info.brand}`}>
+      <PromotionBadge id={info.brand} />
       <div className="recap-head-text">
         <p className="recap-name">
           {info.special ? <span className="show-star">★ </span> : null}

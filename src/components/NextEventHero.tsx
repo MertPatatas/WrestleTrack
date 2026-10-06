@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { brandOf } from '../data/brands';
 import type { Show } from '../data/types';
 import { useT } from '../i18n/SettingsProvider';
 import { showDayKey, type Formatter } from '../lib/dates';
@@ -52,11 +53,11 @@ export function NextEventHero({ show, fmt, now }: { show: Show; fmt: Formatter; 
   const name = show.night ? `${show.name} · ${t('shows.night', { n: show.night })}` : show.name;
 
   return (
-    <Link href={`/shows/${encodeURIComponent(show.id)}`} className={`hero brand-${show.promotion}`}>
+    <Link href={`/shows/${encodeURIComponent(show.id)}`} className={`hero brand-${brandOf(show)}`}>
       <HeroWithPoster image={show.image}>
         <p className="hero-kicker">{t('home.nextBig')}</p>
         <div className="hero-logo">
-          <PromoLogo id={show.promotion} height={44} />
+          <PromoLogo id={brandOf(show)} height={44} />
         </div>
         <h2 className="hero-title">{name}</h2>
         <p className="hero-meta">
