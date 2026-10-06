@@ -274,6 +274,14 @@ export async function refreshRecaps(
     console.warn('[recaps] youtube:', err instanceof Error ? err.message : err);
   }
 
+  // 4. Fotos que falten de los luchadores de todos los resultados guardados (también los antiguos)
+  try {
+    const { recaps: stored } = await readRecaps(now);
+    await photosFor(recapPeople(stored), { maxNew: 30 });
+  } catch (err) {
+    console.warn('[recaps] fotos:', err instanceof Error ? err.message : err);
+  }
+
   return { recaps, videos: videos.length };
 }
 

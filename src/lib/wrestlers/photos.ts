@@ -260,6 +260,11 @@ async function stillExists(url: string): Promise<boolean> {
 
 // ---------------------------------------------------------------- Resolución
 
+/** Ejecuta las tareas de 6 en 6 (para no lanzar decenas de peticiones a la vez a Wikipedia y Openverse). */
+async function inBatches<T>(items: T[], task: (item: T) => Promise<void>, size = 6): Promise<void> {
+  for (let i = 0; i < items.length; i += size) await Promise.all(items.slice(i, i + size).map(task));
+}
+
 /**
  * Fotos de unas personas: las guardadas y, para las que falten (como mucho maxNew por llamada),
  * búsqueda en Wikipedia y Openverse. Devuelve clave → foto (o null si no hay).
@@ -293,26 +298,22 @@ export async function photosFor(people: Person[], { maxNew = 16 }: { maxNew?: nu
   try {
     // 1. Artículo de cada uno: el de la cartelera, el ya guardado o uno buscado por nombre
     const titles = new Map<string, string | null>();
-    await Promise.all(
-      todo.map(async ({ key, person, row }) => {
-        titles.set(key, person.wiki ?? row?.wiki ?? (await findArticle(person.name).catch(() => null)));
-      }),
-    );
+    await inBatches(todo, async ({ key, person, row }) => {
+      titles.set(key, person.wiki ?? row?.wiki ?? (await findArticle(person.name).catch(() => null)));
+    });
     const known = [...new Set([...titles.values()].filter((t): t is string => Boolean(t)))];
     const pages = await pageInfo(known);
     const files = [...new Set([...pages.values()].map((p) => p.image).filter((f): f is string => Boolean(f)))];
     const photos = await fileInfo(files);
 
-    await Promise.all(
-      todo.map(async ({ key, person, row }) => {
-        const title = titles.get(key) ?? null;
-        const page = title ? pages.get(title) : undefined;
-        // 2. Sin foto en Wikipedia: Openverse
-        const photo = (page?.image ? photos.get(page.image.replace(/ /g, '_')) : undefined) ?? (await openverseBest(person.name));
-        result[key] = photo ?? row?.photo ?? null;
-        await saveRow({ key, name: person.name, wiki: page?.title ?? title, photo: result[key], locked: false });
-      }),
-    );
+    await inBatches(todo, async ({ key, person, row }) => {
+      const title = titles.get(key) ?? null;
+      const page = title ? pages.get(title) : undefined;
+      // 2. Sin foto en Wikipedia: Openverse
+      const photo = (page?.image ? photos.get(page.image.replace(/ /g, '_')) : undefined) ?? (await openverseBest(person.name));
+      result[key] = photo ?? row?.photo ?? null;
+      await saveRow({ key, name: person.name, wiki: page?.title ?? title, photo: result[key], locked: false });
+    });
   } catch (err) {
     console.warn('[fotos]', err instanceof Error ? err.message : err);
     for (const { key, row } of todo) result[key] ??= row?.photo ?? null;
