@@ -24,7 +24,8 @@ import {
 
 const DAY_MS = 86_400_000;
 const PROMOTIONS: PromotionId[] = ['wwe', 'aew', 'cmll', 'aaa', 'njpw', 'other'];
-const RETRY_ERRORS_AFTER_MS = 3 * 3600_000;
+// Un show que falló (p. ej. Gemini saturado) se reintenta en la siguiente revisión automática pasada media hora
+const RETRY_ERRORS_AFTER_MS = 30 * 60_000;
 
 // ---------------------------------------------------------------- Validación de la respuesta
 
@@ -124,18 +125,20 @@ export interface ProcessResult {
   error?: string;
 }
 
-/** Procesa el show más antiguo con crónica que la IA aún no haya leído. */
-export async function processNextShow(now = Date.now()): Promise<ProcessResult> {
+/**
+ * Procesa el show más antiguo con crónica que la IA aún no haya leído. retryErrors: el
+ * administrador lo pide a mano, así que también reintenta enseguida los que fallaron.
+ */
+export async function processNextShow({ now = Date.now(), retryErrors = false }: { now?: number; retryErrors?: boolean } = {}): Promise<ProcessResult> {
   if (!geminiConfigured()) return { updates: 0, created: 0, skipped: 'Falta GEMINI_API_KEY' };
   const q = await db();
   const done = await processedShows();
-  const recentErrors = new Set(
-    (
-      await q.query<{ show_id: string }>(`select show_id from app.storyline_jobs where status = 'error' and processed_at > $1`, [
+  const failed = retryErrors
+    ? []
+    : await q.query<{ show_id: string }>(`select show_id from app.storyline_jobs where status = 'error' and processed_at > $1`, [
         new Date(now - RETRY_ERRORS_AFTER_MS),
-      ])
-    ).map((r) => r.show_id),
-  );
+      ]);
+  const recentErrors = new Set(failed.map((r) => r.show_id));
   // Solo crónicas completas: del día anterior o antes, y de Solowrestling (las de Wikipedia son solo resultados)
   const yesterday = new Date(now - DAY_MS).toISOString().slice(0, 10);
   const { recaps } = await readRecaps(now);

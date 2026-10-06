@@ -47,6 +47,8 @@ export function parseWeeklyTitle(raw: string | null): { special?: string; venue?
   const special = text.match(/^([^:]+):\s*(.+ in .+)$/);
   if (special) return { special: special[1].trim(), venue: venueFrom(special[2]) };
   if (/ in /.test(text)) return { venue: venueFrom(text) };
+  // Títulos que describen un combate ("Main Event: A vs. B (c)…"), genéricos o fechas: no son un nombre especial
+  if (/\bvs\.?\s|\(c\)|^main event\b|^episode\b|^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d/i.test(text)) return {};
   return { special: text };
 }
 

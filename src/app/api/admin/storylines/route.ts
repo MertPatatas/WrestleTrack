@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true, id: created });
       }
       case 'process':
-        return NextResponse.json({ ok: true, result: await processNextShow() });
+        return NextResponse.json({ ok: true, result: await processNextShow({ retryErrors: true }) });
       case 'historical': {
         const topic = text(body.topic, 120);
         const url = text(body.url, 300);
