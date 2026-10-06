@@ -6,6 +6,8 @@ import { parseWikiCard } from '../schedule/card';
 import { loadSchedule } from '../schedule/load';
 import { api as wikiApi } from '../schedule/sources/wikipedia';
 import { db, dbConfigured } from '../server/db';
+import { photosFor } from '../wrestlers/photos';
+import { sidesFromResult } from '../wrestlers/people';
 import { matchShow } from './match';
 import { fetchArticleResults, listResultArticles } from './solowrestling';
 import { fetchAnalysisVideos } from './youtube';
@@ -227,6 +229,8 @@ export async function refreshRecaps(
         const items = await fetchArticleResults(url);
         if (!items.some((i) => !i.segment)) continue;
         await s.saveRecap(recapOf(show, items, 'es', { name: 'Solowrestling', url }, now));
+        // Se buscan ya las fotos de sus luchadores, para que estén al abrir los resultados
+        await photosFor(items.flatMap((i) => withSides(i).sides ?? []).flatMap((side) => side.people), { maxNew: 30 }).catch(() => undefined);
         known.set(show.id, now);
         recaps++;
       } catch (err) {
@@ -277,8 +281,20 @@ export async function refreshRecaps(
 export async function readRecaps(now = Date.now()): Promise<RecapsResponse> {
   const s = store();
   const [data, checked] = await Promise.all([s.read(isoDate(now - KEEP_DAYS * DAY_MS)), s.checkedAt()]);
-  return { ...data, updatedAt: checked ? new Date(checked).toISOString() : null };
+  // Quién estuvo en cada combate (para las fotos): se saca del texto al leer, también en los antiguos
+  const recaps = data.recaps.map((r) => ({ ...r, items: r.items.map(withSides) }));
+  return { ...data, recaps, updatedAt: checked ? new Date(checked).toISOString() : null };
 }
+
+function withSides(item: RecapItem): RecapItem {
+  if (item.segment) return item;
+  const sides = sidesFromResult(item.text);
+  return sides.length >= 2 ? { ...item, sides } : item;
+}
+
+/** Personas de unos resultados (para buscar sus fotos). */
+export const recapPeople = (recaps: Recap[]) =>
+  recaps.flatMap((r) => r.items.flatMap((i) => (i.sides ?? []).flatMap((side) => side.people)));
 
 /** true si hace más de 30 min de la última revisión. */
 export async function recapsStale(now = Date.now()): Promise<boolean> {

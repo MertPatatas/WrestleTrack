@@ -206,7 +206,7 @@ export function CatchUpView({ initialTab }: { initialTab: CatchUpTab }) {
                     </>
                   }
                 >
-                  <RecapResults recap={recap} />
+                  <RecapResults recap={recap} photos={data?.photos} />
                   <div className="recap-links">
                     {shows.has(recap.showId) ? (
                       <Link className="link" href={`/shows/${encodeURIComponent(recap.showId)}`}>

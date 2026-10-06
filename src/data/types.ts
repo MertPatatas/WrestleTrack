@@ -63,6 +63,7 @@ export interface RecapItem {
   text: string; // "A vs. B", o la frase del resumen ("A venció a B…")
   result?: string; // "Ganador: A"
   segment?: boolean; // no es un combate (promo, ataque, anuncio…)
+  sides?: MatchSide[]; // quién estuvo en cada lado (para las fotos); se calcula al leer
 }
 
 /** Resultados de un show ya emitido. */
@@ -91,6 +92,7 @@ export interface AnalysisVideo {
 export interface RecapsResponse {
   recaps: Recap[];
   videos: AnalysisVideo[];
+  photos?: Record<string, WrestlerPhoto | null>; // fotos de los luchadores de los resultados
   updatedAt: string | null; // última revisión de las fuentes
 }
 

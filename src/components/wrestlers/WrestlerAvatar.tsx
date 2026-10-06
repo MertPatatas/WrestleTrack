@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import type { MatchSide, WrestlerPhoto } from '../../data/types';
 import { personKey } from '../../lib/wrestlers/people';
 
@@ -14,9 +17,11 @@ const initials = (name: string) =>
 
 // Cara de un luchador en círculo (centrada en su cara); sin foto, sus iniciales con el color de la marca
 export function WrestlerAvatar({ name, photo, size = 44 }: { name: string; photo?: WrestlerPhoto | null; size?: number }) {
+  // Si la foto no carga (borrada en su web, enlace caducado…), las iniciales
+  const [failed, setFailed] = useState<string | null>(null);
   return (
     <span className="avatar" style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }} title={name}>
-      {photo ? (
+      {photo && failed !== photo.url ? (
         <img
           src={photo.url}
           alt={name}
@@ -24,6 +29,7 @@ export function WrestlerAvatar({ name, photo, size = 44 }: { name: string; photo
           decoding="async"
           referrerPolicy="no-referrer"
           style={{ objectPosition: `${photo.focusX}% ${photo.focusY}%` }}
+          onError={() => setFailed(photo.url)}
         />
       ) : (
         <span aria-label={name}>{initials(name)}</span>

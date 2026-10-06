@@ -19,6 +19,9 @@ const DAY_MS = 86_400_000;
 const FRESH_FOUND_MS = 30 * DAY_MS;
 const FRESH_MISSING_MS = 7 * DAY_MS;
 const THUMB = 400;
+const COMMONS_THUMB = 500; // tamaño estándar de miniatura de Wikimedia
+// Direcciones mal formadas de la primera versión (parámetros en el nombre, miniaturas de 400 px)
+const BROKEN_URL = /\?utm_.*\/\d+px-|\/thumb\/.*\/400px-/;
 const WRESTLING = /wrestl|luchador|lucha libre|valet|manager|promoter|commentator|referee|tag team|stable/i;
 const BUCKET = 'wrestlers';
 
@@ -112,7 +115,7 @@ async function fileInfo(files: string[]): Promise<Map<string, WrestlerPhoto>> {
       action: 'query',
       prop: 'imageinfo',
       iiprop: 'url|extmetadata',
-      iiurlwidth: String(THUMB),
+      iiurlwidth: String(COMMONS_THUMB),
       titles: batch.map((f) => `File:${f}`).join('|'),
     });
     const alias = new Map<string, string>();
@@ -171,11 +174,15 @@ interface OpenverseImage {
 const licenseLabel = (img: OpenverseImage) =>
   img.license === 'cc0' ? 'CC0' : img.license === 'pdm' ? 'Dominio público' : `CC ${img.license.toUpperCase()} ${img.license_version ?? ''}`.trim();
 
-/** URL de tamaño razonable: miniatura de Commons, tamaño medio de Flickr o la de Openverse. */
+/**
+ * URL de tamaño razonable: miniatura de Commons, tamaño medio de Flickr o la de Openverse.
+ * Wikimedia solo sirve miniaturas de tamaños estándar (250, 330, 500, 960…): se pide la de 500 px.
+ */
 function displayUrl(img: OpenverseImage): string {
-  const commons = img.url.match(/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/(\w\/\w\w)\/([^/]+)$/);
-  if (commons && !/\.svg$/i.test(commons[2]) && (img.width ?? THUMB + 1) > THUMB) {
-    return `https://upload.wikimedia.org/wikipedia/commons/thumb/${commons[1]}/${commons[2]}/${THUMB}px-${commons[2]}`;
+  const commons = img.url.split('?')[0].match(/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/(\w\/\w\w)\/([^/]+)$/);
+  if (commons) {
+    if (/\.svg$/i.test(commons[2]) || (img.width !== undefined && img.width <= COMMONS_THUMB)) return img.url.split('?')[0];
+    return `https://upload.wikimedia.org/wikipedia/commons/thumb/${commons[1]}/${commons[2]}/${COMMONS_THUMB}px-${commons[2]}`;
   }
   if (/staticflickr\.com/.test(img.url) && !/_o\.\w+$/.test(img.url)) return img.url.replace(/_[bchk]\.(jpe?g|png)$/i, '_z.$1');
   return img.thumbnail ?? img.url;
@@ -232,10 +239,23 @@ async function openverseBest(name: string): Promise<WrestlerPhoto | null> {
   // Un nombre de una sola palabra corta ("Kofi") daría muchos falsos positivos
   if (tokens.length < 2 && (tokens[0]?.length ?? 0) < 6) return null;
   const results = await openverseSearch(name, 6).catch(() => []);
-  const best = results.find((r) => tokens.every((t) => normalize(r.title).includes(t)));
-  if (!best) return null;
-  const { title: _t, ...photo } = best;
-  return photo;
+  // Openverse a veces aún lista fotos ya borradas de su web: se comprueba que existan
+  for (const candidate of results.filter((r) => tokens.every((t) => normalize(r.title).includes(t))).slice(0, 3)) {
+    if (!(await stillExists(candidate.url))) continue;
+    const { title: _t, ...photo } = candidate;
+    return photo;
+  }
+  return null;
+}
+
+/** false solo si la web dice que ya no existe (404/410); ante la duda (límite, red), se acepta. */
+async function stillExists(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { method: 'HEAD', headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(6000), cache: 'no-store' });
+    return res.status !== 404 && res.status !== 410;
+  } catch {
+    return true;
+  }
 }
 
 // ---------------------------------------------------------------- Resolución
@@ -259,7 +279,9 @@ export async function photosFor(people: Person[], { maxNew = 16 }: { maxNew?: nu
   for (const key of keys) {
     const row = rows.get(key);
     const age = row ? now - new Date(row.checked_at).getTime() : Infinity;
-    if (row && (row.locked || age < (row.photo ? FRESH_FOUND_MS : FRESH_MISSING_MS))) result[key] = row.photo;
+    // Las guardadas con una dirección que ya se sabe que falla se buscan de nuevo
+    const broken = row?.photo && !row.locked && BROKEN_URL.test(row.photo.url);
+    if (row && !broken && (row.locked || age < (row.photo ? FRESH_FOUND_MS : FRESH_MISSING_MS))) result[key] = row.photo;
     else pending.push({ key, person: unique.get(key)!, row });
   }
   void touch(keys.filter((k) => k in result));

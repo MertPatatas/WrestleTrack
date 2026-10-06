@@ -149,7 +149,14 @@ function WrestlerEditor({ row, onChange }: { row: Row; onChange: () => void }) {
           <div className="admin-candidates">
             {candidates.map((c) => (
               <figure key={c.url} className="admin-candidate">
-                <img src={c.url} alt={c.title} loading="lazy" referrerPolicy="no-referrer" />
+                {/* Si la foto ya no existe en su web, se oculta la opción */}
+                <img
+                  src={c.url}
+                  alt={c.title}
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => ((e.currentTarget.closest('figure') as HTMLElement).hidden = true)}
+                />
                 <figcaption className="small">
                   <span className="admin-candidate-title">{c.title}</span>
                   <span className="muted">

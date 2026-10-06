@@ -1,5 +1,6 @@
 import { after, NextResponse } from 'next/server';
-import { readRecaps, recapsStale, refreshRecapsNow } from '../../../lib/recaps/collect';
+import { readRecaps, recapPeople, recapsStale, refreshRecapsNow } from '../../../lib/recaps/collect';
+import { photosFor } from '../../../lib/wrestlers/photos';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,9 @@ export async function GET() {
     } else if (await recapsStale()) {
       after(() => refreshRecapsNow().catch((err) => console.warn('[recaps] revisión fallida:', err)));
     }
-    return NextResponse.json(data, {
+    // Fotos de los luchadores: las guardadas y unas pocas nuevas por petición (el resto, en las siguientes)
+    const photos = await photosFor(recapPeople(data.recaps), { maxNew: 12 }).catch(() => ({}));
+    return NextResponse.json({ ...data, photos }, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=1800' },
     });
   } catch (err) {

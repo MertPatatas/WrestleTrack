@@ -36,10 +36,28 @@ export function peopleFromText(side: string): Person[] {
     .replace(/\(c\)/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
-  // Equipo con sus miembros entre paréntesis
+  // Equipo con sus miembros entre paréntesis; lo que va antes del equipo también cuenta
+  // ("Ricky Saints y War Raiders (Ivar y Erik)" → Ricky Saints, Ivar, Erik)
   const team = text.match(/^(.+?)\s*\(([^()]+)\)\s*$/);
-  const names = team ? splitNames(team[2]) : splitNames(text);
+  const names = team ? [...splitNames(team[1]).slice(0, -1), ...splitNames(team[2])] : splitNames(text);
   return names.slice(0, MAX_PER_SIDE).map((name) => ({ name }));
+}
+
+// "A venció a B…", "A y B vencieron a C…", "A defeated B by pinfall"
+const RESULT_SENTENCE =
+  /^(.+?)\s+(?:vencieron|venció|vencio|derrotaron|derrotó|derroto|se impusieron a|se impuso a|defeated|def\.|beat)\s+(?:a\s+)?(.+?)(?:\s+(?:en|para|por|con|tras|mediante|gracias|y\s+(?:retuvo|retuvieron|ganó|ganaron|se)|by|to|in|via|after|and\s+(?:won|retained))\b.*)?\.?$/i;
+
+/**
+ * Lados de un resultado: "A vs. B" o una frase "A venció a B en…" (ganador / perdedores).
+ * Vacío si no se reconoce.
+ */
+export function sidesFromResult(text: string): MatchSide[] {
+  const clean = text.replace(/\*\*/g, '').trim();
+  if (/\svs\.?\s/i.test(clean)) return sidesFromText(clean);
+  const m = clean.match(RESULT_SENTENCE);
+  if (!m) return [];
+  const sides = [m[1], m[2]].map((label) => ({ label: label.trim(), people: peopleFromText(label) }));
+  return sides.every((s) => s.people.length) ? sides : [];
 }
 
 /** Lados de un combate "A vs. B (vs. C…)" escrito como texto. Vacío si no tiene "vs.". */

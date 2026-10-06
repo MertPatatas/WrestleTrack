@@ -219,7 +219,7 @@ export function ShowDetailView({ id }: { id: string }) {
         <div className="card">
           {ended ? (
             recap ? (
-              <RecapResults recap={recap} />
+              <RecapResults recap={recap} photos={recaps.data?.photos} />
             ) : recaps.status === 'loading' ? (
               <div aria-hidden="true">
                 <div className="skeleton-line" />
