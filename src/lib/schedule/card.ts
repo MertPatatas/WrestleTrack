@@ -1,5 +1,6 @@
 import 'server-only';
-import type { Show } from '../../data/types';
+import type { MatchSide, Person, Show } from '../../data/types';
+import { isPersonName, peopleFromText, sidesFromText } from '../wrestlers/people';
 import { api as wikiApi, clean as cleanWiki } from './sources/wikipedia';
 
 // CARTELERA de un show, de la fuente que la publique:
@@ -13,6 +14,7 @@ export interface CardMatch {
   title?: string; // estipulación o tipo de combate ("Campeonato Mundial", "Ladder match"...)
   participants: string; // "A vs. B"
   group?: string; // parte del evento si tiene varias ("Night 1", "Pre-show"...)
+  sides?: MatchSide[]; // quién está en cada lado (para las fotos)
 }
 
 export interface EventCard {
@@ -66,6 +68,33 @@ function titleCase(text: string): string {
 
 // ---------------------------------------------------------------- Wikipedia
 
+/**
+ * Lados de un combate en wikitexto, con el artículo de cada luchador sacado de sus enlaces:
+ * "[[The Elite (professional wrestling)|The Elite]] ([[Kenny Omega]] and [[Hangman Page|Page]]) vs. [[Bandido (wrestler)|Bandido]]"
+ * Los acompañantes "(with …)" no cuentan; de un equipo con miembros, salen los miembros.
+ */
+function sidesFromWikitext(raw: string): MatchSide[] {
+  const text = raw.replace(/<ref[^>]*\/>|<ref[\s\S]*?<\/ref>|<!--[\s\S]*?-->/gi, '');
+  const parts = text.split(/\s+vs\.?\s+/i);
+  if (parts.length < 2) return [];
+  return parts.map((sideRaw) => {
+    // Enlaces → marcadores, para poder quitar paréntesis sin romper "[[Pac (wrestler)|Pac]]"
+    const links: Person[] = [];
+    const side = sideRaw
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target: string, shown?: string) => {
+        links.push({ name: cleanWiki(shown ?? target), wiki: target.split('#')[0].trim() });
+        return `§${links.length - 1}§`;
+      })
+      .replace(/\((?:with|w\/)\s[^)]*\)/gi, '')
+      .replace(/\(c\)/gi, '');
+    const team = side.match(/^[^(]*\((.+)\)\s*$/);
+    const scope = team ? team[1] : side;
+    const people = [...scope.matchAll(/§(\d+)§/g)].map((m) => links[Number(m[1])]).filter((p) => p && isPersonName(p.name));
+    const label = trimSeparators(cleanWiki(sideRaw));
+    return { label, people: people.length ? people.slice(0, 4) : peopleFromText(label) };
+  });
+}
+
 /** Bloques de la plantilla "Pro wrestling results table" (uno por noche o por pre-show). */
 function resultTables(wikitext: string): string[] {
   const blocks: string[] = [];
@@ -109,10 +138,11 @@ export function parseWikiCard(wikitext: string, night?: number): CardMatch[] {
       const raw = field(`match${n}`);
       if (!raw) continue;
       const participants = trimSeparators(cleanWiki(raw));
+      const sides = sidesFromWikitext(raw);
       if (!participants) continue;
       // {{small|…}} suele ser una aclaración útil ("el ganador se clasifica para…"): se conserva el texto
       const stip = field(`stip${n}`).replace(/\{\{\s*small\s*\|([^{}]*)\}\}/gi, '$1');
-      matches.push({ title: trimSeparators(cleanWiki(stip)) || undefined, participants });
+      matches.push({ title: trimSeparators(cleanWiki(stip)) || undefined, participants, ...(sides.length >= 2 ? { sides } : {}) });
     }
     return { caption: trimSeparators(cleanWiki(field('caption'))), matches };
   });
@@ -268,6 +298,8 @@ export async function loadCard(show: Show): Promise<EventCard | null> {
     console.warn(`[card] ${show.id}:`, err instanceof Error ? err.message : err);
     if (hit) return hit.card; // si la fuente falla, la última copia buena
   }
+  // Fuentes sin enlaces (AEW, CMLL, NJPW): los lados se sacan del texto
+  for (const m of card?.matches ?? []) m.sides ??= sidesFromText(m.participants);
   cache.set(`${show.id}:${show.night ?? ''}`, { at: Date.now(), card });
   if (cache.size > 300) cache.delete(cache.keys().next().value as string);
   return card;

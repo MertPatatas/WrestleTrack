@@ -170,6 +170,7 @@ const es = {
   'catchup.play': 'Reproducir: {title}',
   'catchup.error': 'No se pudieron cargar los resúmenes. Comprueba tu conexión e inténtalo de nuevo.',
   'detail.resultsTitle': 'Resultados',
+  'detail.photoCredits': 'Créditos de las fotos (licencias libres: Wikimedia Commons, Openverse)',
   'detail.analysisTitle': 'Análisis en vídeo',
   'detail.noResults': 'Aún no tenemos los resultados de este show. Suelen aparecer unas horas después de que termine.',
 
@@ -483,6 +484,7 @@ const en: Messages = {
   'catchup.play': 'Play: {title}',
   'catchup.error': 'Results could not be loaded. Check your connection and try again.',
   'detail.resultsTitle': 'Results',
+  'detail.photoCredits': 'Photo credits (free licenses: Wikimedia Commons, Openverse)',
   'detail.analysisTitle': 'Video analysis',
   'detail.noResults': 'We do not have the results of this show yet. They usually appear a few hours after it ends.',
 

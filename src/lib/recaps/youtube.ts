@@ -16,6 +16,7 @@ export const CHANNELS: Channel[] = [
   { id: 'UCz5DkZXywjvhhubijsJ_NpA', name: 'Rolsogames', lang: 'es' },
   { id: 'UCUwXj8PfFuLGSuFTkYxkZEQ', name: 'WhatCulture Wrestling', lang: 'en' },
   { id: 'UCRSW0_U9cdAQU5FEOXs-DJw', name: 'WrestleTalk', lang: 'en' },
+  { id: 'UC5YhP-H5snGgi6dOE8vj-aA', name: 'Simon Miller', lang: 'en' },
 ];
 
 export interface FeedVideo {

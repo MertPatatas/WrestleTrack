@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Show } from '../../../data/types';
 import { loadCard } from '../../../lib/schedule/card';
+import { photosFor } from '../../../lib/wrestlers/photos';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 const PROMOTIONS = new Set(['wwe', 'aew', 'cmll', 'aaa', 'njpw', 'other']);
 
@@ -33,8 +35,11 @@ export async function GET(request: NextRequest) {
 
   const show = { id, kind, promotion, eventDate: date, url, night, name: '' } as unknown as Show;
   const card = await loadCard(show);
+  // Fotos de los luchadores (las que falten se buscan ahora y se guardan para las siguientes veces)
+  const people = (card?.matches ?? []).flatMap((m) => (m.sides ?? []).flatMap((side) => side.people));
+  const photos = people.length ? await photosFor(people).catch(() => ({})) : {};
   return NextResponse.json(
-    { card },
+    { card, photos },
     // La cartelera es pública: la CDN puede guardarla 30 min
     { headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600' } },
   );

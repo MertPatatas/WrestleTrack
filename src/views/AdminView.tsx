@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { AdminWrestlers } from '../components/admin/AdminWrestlers';
 import { PromotionBadge } from '../components/PromotionBadge';
 import { BEAT_KINDS, type AdminStoryline, type BeatKind, type PromotionId, type StorylineBeat } from '../data/types';
 import { useSettings } from '../i18n/SettingsProvider';
@@ -399,6 +400,7 @@ export function AdminView() {
   const [wikiUrl, setWikiUrl] = useState('');
   const [working, setWorking] = useState<null | 'process' | 'historical'>(null);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [section, setSection] = useState<'storylines' | 'wrestlers'>('storylines');
 
   const load = useCallback(async () => {
     try {
@@ -460,6 +462,18 @@ export function AdminView() {
   return (
     <div className="admin">
       <h1 className="page-title">Administración</h1>
+      <div className="segment" role="group" aria-label="Sección">
+        <button type="button" aria-pressed={section === 'storylines'} onClick={() => setSection('storylines')}>
+          Storylines
+        </button>
+        <button type="button" aria-pressed={section === 'wrestlers'} onClick={() => setSection('wrestlers')}>
+          Luchadores
+        </button>
+      </div>
+      {section === 'wrestlers' ? (
+        <AdminWrestlers />
+      ) : (
+      <>
       <p className="muted small notice">
         Lo que propone la IA no se ve en la web hasta que lo apruebas. Cada media hora se procesa como mucho un show nuevo (el día
         después de emitirse).
@@ -522,6 +536,8 @@ export function AdminView() {
           </div>
         </>
       ) : null}
+      </>
+      )}
     </div>
   );
 }

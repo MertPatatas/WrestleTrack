@@ -5,9 +5,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { RecapResults } from '../components/catchup/RecapResults';
 import { VideoCard } from '../components/catchup/VideoCard';
 import { HeroWithPoster } from '../components/NextEventHero';
+import { MatchFaces, PhotoCredits } from '../components/wrestlers/WrestlerAvatar';
 import { PromoLogo } from '../components/PromoLogo';
 import { REGIONS, detectRegion, whereToWatch, type Region } from '../data/broadcast';
-import { isSpecial, type Show } from '../data/types';
+import { isSpecial, type Show, type WrestlerPhoto } from '../data/types';
 import { brandOf } from '../data/brands';
 import { useAppData } from '../data/useAppData';
 import { useRecaps } from '../data/useRecaps';
@@ -26,7 +27,8 @@ const OFFICIAL_PAGES: Record<string, string> = {
   'cmll-martes': 'https://cmll.com/cartelera/',
 };
 
-type CardState = { status: 'loading' } | { status: 'ready'; card: EventCard | null } | { status: 'error' };
+type Photos = Record<string, WrestlerPhoto | null>;
+type CardState = { status: 'loading' } | { status: 'ready'; card: EventCard | null; photos: Photos } | { status: 'error' };
 
 function useCard(show: Show | undefined, ended: boolean): CardState | null {
   const [state, setState] = useState<CardState | null>(null);
@@ -39,8 +41,8 @@ function useCard(show: Show | undefined, ended: boolean): CardState | null {
     let alive = true;
     setState({ status: 'loading' });
     fetch(`/api/card?${params}`)
-      .then((r) => (r.ok ? (r.json() as Promise<{ card: EventCard | null }>) : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((data) => alive && setState({ status: 'ready', card: data.card }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ card: EventCard | null; photos?: Photos }>) : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((data) => alive && setState({ status: 'ready', card: data.card, photos: data.photos ?? {} }))
       .catch(() => alive && setState({ status: 'error' }));
     return () => {
       alive = false;
@@ -250,6 +252,7 @@ export function ShowDetailView({ id }: { id: string }) {
                       {/* Parte del evento (noche, pre-show) al empezar cada una */}
                       {m.group && m.group !== all[i - 1]?.group ? <span className="match-group">{m.group}</span> : null}
                       {m.title ? <span className="match-title">{m.title.split(' / ')[0]}</span> : null}
+                      {m.sides ? <MatchFaces sides={m.sides} photos={card.photos} /> : null}
                       <span className="match-participants">{m.participants}</span>
                       {/* Aclaraciones tras el tipo de combate ("el ganador se clasifica para…") */}
                       {m.title?.includes(' / ') ? (
@@ -265,6 +268,11 @@ export function ShowDetailView({ id }: { id: string }) {
                   {card.card.source.name} ↗
                 </a>
               </p>
+              <PhotoCredits
+                people={card.card.matches.flatMap((m) => (m.sides ?? []).flatMap((side) => side.people.map((p) => p.name)))}
+                photos={card.photos}
+                label={t('detail.photoCredits')}
+              />
             </>
           ) : (
             <>

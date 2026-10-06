@@ -121,7 +121,7 @@ export function matchShow(title: string, publishedAt: number, shows: Show[]): Sh
 export function isAnalysisTitle(title: string): boolean {
   const n = normalize(title);
   if (/\b(?:preview|previa|predictions?|predicciones|prediccion|shorts|live stream|watch along|watchalong)\b/.test(n)) return false;
-  return /\b(?:review|reviews|resumen|recap|reaccion|reaction|analisis|analysis|results|resultados|lo bueno y lo malo|grades|calificaciones)\b/.test(n);
+  return /\b(?:review|reviews|resumen|recap|reaccion|reaction|analisis|analysis|results|resultados|lo bueno y lo malo|grades|calificaciones|hot takes?)\b/.test(n);
 }
 
 /** Artículo de resultados de un show (no previas ni audiencias). */

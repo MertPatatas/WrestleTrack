@@ -159,6 +159,17 @@ const SCHEMA = [
      detail       text,
      processed_at timestamptz not null default now()
    )`,
+  // Fotos de luchadores (Wikipedia, Openverse o subidas desde la administración)
+  `create table if not exists app.wrestlers (
+     key          text primary key,                     -- nombre normalizado ("will ospreay")
+     name         text not null,
+     wiki         text,                                 -- título del artículo de Wikipedia
+     photo        jsonb,                                -- WrestlerPhoto, o null si no hay foto
+     locked       boolean not null default false,       -- elegida a mano: no se cambia sola
+     checked_at   timestamptz not null default now(),
+     seen_at      timestamptz not null default now()    -- última vez que salió en una cartelera
+   )`,
+  `alter table app.wrestlers enable row level security`,
   `alter table app.storylines enable row level security`,
   `alter table app.storyline_beats enable row level security`,
   `alter table app.storyline_jobs enable row level security`,

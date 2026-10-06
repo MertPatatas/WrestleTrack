@@ -94,6 +94,30 @@ export interface RecapsResponse {
   updatedAt: string | null; // última revisión de las fuentes
 }
 
+/** Foto de un luchador, siempre con licencia libre o subida por un administrador. */
+export interface WrestlerPhoto {
+  url: string;
+  source: 'wikipedia' | 'openverse' | 'upload' | 'manual';
+  credit?: string; // autor
+  creditUrl?: string; // página de la foto (para la atribución)
+  license?: string; // "CC BY-SA 4.0"
+  licenseUrl?: string;
+  focusX: number; // dónde está la cara, en % (para recortar en círculo)
+  focusY: number;
+}
+
+/** Una persona en una cartelera o storyline; wiki = título exacto de su artículo, si se conoce. */
+export interface Person {
+  name: string;
+  wiki?: string;
+}
+
+/** Un lado de un combate: lo que se lee ("The Elite") y quiénes son (para las fotos). */
+export interface MatchSide {
+  label: string;
+  people: Person[];
+}
+
 export type ShowKind = 'weekly' | 'ple' | 'other';
 
 export interface Show {

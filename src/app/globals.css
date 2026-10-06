@@ -2241,3 +2241,178 @@ button.session-avatar[aria-expanded='true'] {
     font-size: 28px;
   }
 }
+
+/* ---------- Fotos de luchadores ---------- */
+
+.avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--brand) 30%, var(--surface-alt));
+  border: 2px solid color-mix(in srgb, var(--brand) 70%, var(--line));
+  color: var(--ivory);
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.match-faces {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 4px 0 2px;
+}
+.match-faces-side-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.match-faces-side {
+  display: inline-flex;
+  align-items: center;
+}
+/* Los compañeros de equipo se solapan un poco */
+.match-faces-side .avatar + .avatar {
+  margin-left: -10px;
+}
+.match-faces-vs {
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.story-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.story-chips li .avatar {
+  margin-left: -6px;
+  border-width: 1px;
+}
+
+.photo-credits {
+  margin-top: 4px;
+}
+.photo-credits summary {
+  cursor: pointer;
+}
+.photo-credits ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ---------- Administración: luchadores ---------- */
+
+.admin-wrestler {
+  gap: 10px;
+}
+.admin-wrestler-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-wrestler-name {
+  font-weight: 800;
+  font-size: 16px;
+}
+.admin-wrestler-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.admin-focus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+}
+.admin-focus-frame {
+  position: relative;
+  max-width: 260px;
+  line-height: 0;
+}
+.admin-focus-frame img {
+  max-width: 260px;
+  max-height: 300px;
+  border-radius: var(--radius-sm);
+  cursor: crosshair;
+}
+.admin-focus-dot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.admin-focus-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+.admin-focus-previews {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.admin-candidates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.admin-candidate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+}
+.admin-candidate img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: 50% 25%;
+  border-radius: var(--radius-sm);
+}
+.admin-candidate figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.admin-candidate-title {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

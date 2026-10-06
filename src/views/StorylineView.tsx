@@ -5,9 +5,12 @@ import { useMemo, useState } from 'react';
 import { PromoLogo } from '../components/PromoLogo';
 import { StorylineCard } from '../components/StorylineCard';
 import { formatDay, formatMonth, KIND_LABELS, storyPeriod } from '../components/storylines/format';
+import { PhotoCredits, WrestlerAvatar } from '../components/wrestlers/WrestlerAvatar';
 import type { StorylineBeat } from '../data/types';
 import { useStorylines } from '../data/useStorylines';
+import { useWrestlerPhotos } from '../data/useWrestlerPhotos';
 import { useSettings } from '../i18n/SettingsProvider';
+import { personKey } from '../lib/wrestlers/people';
 
 // PÁGINA DE UNA STORYLINE: en qué punto está, quién participa, su cronología completa (de la más
 // antigua a la más reciente, agrupada por meses) y las storylines que le dan contexto.
@@ -16,6 +19,7 @@ export function StorylineView({ id }: { id: string }) {
   const { t, locale } = useSettings();
   const [onlyKey, setOnlyKey] = useState(false);
   const story = storylines?.find((s) => s.id === id);
+  const photos = useWrestlerPhotos(story?.participants ?? []);
 
   // Contexto: las que esta cita y las que citan a esta
   const context = useMemo(
@@ -92,7 +96,10 @@ export function StorylineView({ id }: { id: string }) {
         {story.participants.length ? (
           <ul className="story-chips" aria-label={t('storylines.participants')}>
             {story.participants.map((p) => (
-              <li key={p}>{p}</li>
+              <li key={p}>
+                <WrestlerAvatar name={p} photo={photos[personKey(p)]} size={28} />
+                {p}
+              </li>
             ))}
           </ul>
         ) : null}
@@ -168,6 +175,7 @@ export function StorylineView({ id }: { id: string }) {
       </section>
 
       <p className="muted small story-disclaimer">{t('storylines.disclaimer')}</p>
+      <PhotoCredits people={story.participants} photos={photos} label={t('detail.photoCredits')} />
     </article>
   );
 }
