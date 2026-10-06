@@ -9,8 +9,7 @@ import { VideoCard } from '../components/catchup/VideoCard';
 import { FilterChips, type Filter } from '../components/FilterChips';
 import { PageHeader } from '../components/PageHeader';
 import { PromotionBadge } from '../components/PromotionBadge';
-import { SampleNotice } from '../components/SampleNotice';
-import { StorylineCard } from '../components/StorylineCard';
+import { StorylinesPanel } from '../components/storylines/StorylinesPanel';
 import { CATCHUP_TABS, type CatchUpTab } from '../data/catchup';
 import { isSpecial, type AnalysisVideo, type PromotionId, type Show } from '../data/types';
 import { useAppData } from '../data/useAppData';
@@ -139,7 +138,6 @@ export function CatchUpView({ initialTab }: { initialTab: CatchUpTab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, fmt, shows, scope, lang, t]);
 
-  const storylines = (app?.storylines ?? []).filter((s) => matchesFilter(s.promotion));
   const shownRecaps = recaps.filter((r) => matchesFilter(r.info.promotion));
   const shownGroups = videoGroups.filter((g) => matchesFilter(g.info.promotion));
   const loading = (status === 'loading' && !data) || !fmt;
@@ -157,15 +155,7 @@ export function CatchUpView({ initialTab }: { initialTab: CatchUpTab }) {
       <FilterChips value={filter} onChange={setFilter} />
 
       {tab === 'storylines' ? (
-        <>
-          <SampleNotice />
-          <div className="stack stack--grid">
-            {storylines.map((s) => (
-              <StorylineCard key={s.id} item={s} now={now} />
-            ))}
-          </div>
-          {app && storylines.length === 0 ? <p className="empty">{t('storylines.empty')}</p> : null}
-        </>
+        <StorylinesPanel promotion={filter} />
       ) : status === 'error' && !data ? (
         <div className="empty">
           <p>{t('catchup.error')}</p>

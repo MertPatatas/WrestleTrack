@@ -18,22 +18,43 @@ export interface NewsItem {
   lang?: 'en' | 'es';
 }
 
-export type StorylineStatus = 'en_curso' | 'cerrada';
+export type StorylineStatus = 'active' | 'closed';
 
-export interface StorylineUpdate {
-  showName: string;
-  date: string; // ISO 8601
-  advanced: boolean;
-  summary: string;
+export const BEAT_KINDS = ['match', 'promo', 'attack', 'announcement', 'title_change', 'turn', 'return', 'other'] as const;
+export type BeatKind = (typeof BEAT_KINDS)[number];
+
+/** Un avance de una storyline: lo que pasó en un show (o en una fecha, en las históricas). */
+export interface StorylineBeat {
+  id: number;
+  date: string; // 'YYYY-MM-DD'
+  showId?: string;
+  showName?: string;
+  title: string;
+  text: string;
+  kind: BeatKind;
+  importance: 1 | 2 | 3; // 3 = momento clave
+  sourceUrl?: string;
+  status?: 'pending' | 'approved' | 'rejected'; // solo en la administración
 }
 
 export interface Storyline {
   id: string;
   promotion: PromotionId;
   title: string;
-  subtitle: string;
+  summary: string; // en qué punto está la historia (o cómo terminó)
+  participants: string[];
   status: StorylineStatus;
-  updates: StorylineUpdate[]; // la más reciente primero
+  startedOn?: string; // 'YYYY-MM-DD'
+  endedOn?: string;
+  related: string[]; // ids de storylines que dan contexto
+  beats: StorylineBeat[]; // de la más antigua a la más reciente
+  updatedAt: string; // ISO 8601
+}
+
+/** Storyline en la administración: con lo pendiente de revisar. */
+export interface AdminStoryline extends Storyline {
+  published: boolean;
+  pending: { summary?: string; status?: StorylineStatus } | null;
 }
 
 /** Un combate (o un segmento destacado) de los resultados de un show ya emitido. */

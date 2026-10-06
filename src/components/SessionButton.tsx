@@ -8,7 +8,7 @@ import { useSettings } from '../i18n/SettingsProvider';
 // Arriba a la derecha: "Iniciar sesión" sin cuenta; con ella, la inicial del usuario, que abre un
 // menú con la configuración (perfil) y cerrar sesión
 export function SessionButton() {
-  const { user, authReady, accountsEnabled, signOut, t } = useSettings();
+  const { user, authReady, accountsEnabled, isAdmin, signOut, t } = useSettings();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -72,6 +72,15 @@ export function SessionButton() {
           </svg>
           {t('session.settings')}
         </Link>
+        {isAdmin ? (
+          <Link href="/admin" role="menuitem" className="session-item" onClick={() => setOpen(false)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            {t('session.admin')}
+          </Link>
+        ) : null}
         <button
           type="button"
           role="menuitem"

@@ -6,11 +6,11 @@ import { NewsCard } from '../components/NewsCard';
 import { NewsSkeleton } from '../components/NewsSkeleton';
 import { NextEventHero } from '../components/NextEventHero';
 import { PageHeader } from '../components/PageHeader';
-import { SampleNotice } from '../components/SampleNotice';
 import { ShowRow } from '../components/ShowRow';
 import { StorylineCard } from '../components/StorylineCard';
 import { isSpecial } from '../data/types';
 import { useAppData } from '../data/useAppData';
+import { sortStorylines, useStorylines } from '../data/useStorylines';
 import { useNews } from '../data/useNews';
 import { useT } from '../i18n/SettingsProvider';
 import { useFormat } from '../lib/dates';
@@ -40,13 +40,14 @@ export function HomeView() {
   }, []);
   const upcoming = data ? data.shows.filter((s) => new Date(s.endsAt).getTime() > now).slice(0, 3) : [];
   // El próximo PPV/PLE que aún no ha terminado, para la tarjeta destacada
+  const { storylines } = useStorylines();
+  const activeStories = sortStorylines((storylines ?? []).filter((s) => s.status === 'active')).slice(0, 2);
   const nextBig = data?.shows.find((s) => isSpecial(s) && new Date(s.endsAt).getTime() > now);
 
   return (
     <>
       <PageHeader title={t('home.title')} />
       {nextBig && fmt ? <NextEventHero show={nextBig} fmt={fmt} now={now} /> : null}
-      <SampleNotice text={t('home.sample')} />
 
       {/* En escritorio los próximos shows viven en la columna lateral */}
       <section className="hide-desktop">
@@ -71,12 +72,17 @@ export function HomeView() {
         )}
       </section>
 
-      <section>
-        <SectionHead title={t('home.storylines')} href="/al-dia?tab=storylines" />
-        <div className="stack">
-          {data?.storylines.slice(0, 2).map((s) => <StorylineCard key={s.id} item={s} now={now} />)}
-        </div>
-      </section>
+      {/* Storylines en curso con avances más recientes (sin sección si aún no hay ninguna publicada) */}
+      {activeStories.length ? (
+        <section>
+          <SectionHead title={t('home.storylines')} href="/al-dia?tab=storylines" />
+          <div className="stack">
+            {activeStories.map((s) => (
+              <StorylineCard key={s.id} item={s} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

@@ -1727,3 +1727,513 @@ button.session-avatar[aria-expanded='true'] {
 .details-body {
   display: block;
 }
+
+/* ---------- Storylines: tarjetas ---------- */
+
+.story-card {
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  border-left: 3px solid var(--brand);
+}
+.story-card:hover {
+  transform: translateY(-2px);
+}
+.story-status {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.story-status--active {
+  color: var(--bg);
+  background: var(--success);
+}
+.story-status--closed {
+  color: var(--silver);
+  border: 1px solid var(--line);
+}
+.story-summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.story-people {
+  color: var(--ivory);
+  font-size: 13px;
+  font-weight: 600;
+}
+.story-last {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+}
+.story-last-label {
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.story-last-title {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.view-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  margin-bottom: 10px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+}
+.view-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--silver);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+.view-switch button[aria-pressed='true'] {
+  background: var(--gold);
+  color: var(--bg);
+}
+
+.beat-kind {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--silver);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.beat-kind--key {
+  color: var(--bg);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+/* ---------- Storylines: línea de tiempo ---------- */
+
+.timeline {
+  --tl-label: 170px;
+}
+.timeline-frame {
+  padding: 0;
+  overflow: hidden;
+}
+.timeline-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.timeline-grid {
+  position: relative;
+  min-width: 100%;
+  padding-bottom: 8px;
+}
+.timeline-axis,
+.timeline-row {
+  display: flex;
+  align-items: stretch;
+}
+.timeline-axis {
+  height: 34px;
+  border-bottom: 1px solid var(--line);
+}
+.timeline-row {
+  height: 46px;
+}
+.timeline-row + .timeline-row {
+  border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+}
+.timeline-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  flex: 0 0 var(--tl-label);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  color: var(--ivory);
+  text-decoration: none;
+  min-width: 0;
+}
+.timeline-label:hover .timeline-name {
+  color: var(--gold);
+}
+.timeline-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  transition: color 0.2s ease;
+}
+.timeline-track {
+  position: relative;
+  flex: 1;
+}
+.timeline-tick {
+  position: absolute;
+  top: 10px;
+  transform: translateX(4px);
+  color: var(--silver);
+  font-size: 12px;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+.timeline-tick--major {
+  color: var(--ivory);
+  font-weight: 700;
+}
+.timeline-today {
+  position: absolute;
+  bottom: -1px;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.timeline-gridline,
+.timeline-now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+  opacity: 0.6;
+}
+.timeline-now {
+  background: var(--gold);
+  opacity: 0.5;
+}
+.timeline-bar {
+  position: absolute;
+  top: 50%;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--brand) 35%, transparent);
+}
+/* Las que siguen vivas se intensifican hacia hoy */
+.timeline-bar--active {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 30%, transparent), color-mix(in srgb, var(--brand) 75%, transparent));
+}
+.timeline-dot {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  background: var(--brand);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.timeline-dot--1 {
+  width: 8px;
+  height: 8px;
+  opacity: 0.8;
+}
+.timeline-dot--3 {
+  width: 16px;
+  height: 16px;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--brand);
+}
+.timeline-dot:hover,
+.timeline-dot:focus-visible {
+  transform: translate(-50%, -50%) scale(1.35);
+  outline: none;
+  z-index: 4;
+}
+.timeline-dot--selected {
+  transform: translate(-50%, -50%) scale(1.45);
+  box-shadow: 0 0 0 3px var(--ivory);
+  z-index: 4;
+}
+.timeline-detail {
+  margin-top: 12px;
+  border-left: 3px solid var(--brand);
+}
+.timeline-detail-story {
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.timeline-hint {
+  padding-top: 10px;
+}
+
+/* ---------- Storylines: página de una historia ---------- */
+
+.story-hero {
+  border-top: 3px solid var(--brand);
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--brand) 22%, transparent), transparent 60%),
+    var(--surface);
+}
+.story-title {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.05;
+}
+.story-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.story-chips li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 600;
+}
+.story-summary-full {
+  font-size: 16px;
+  color: var(--ivory);
+}
+.story-disclaimer {
+  padding: 16px 0 8px;
+}
+
+/* Cronología vertical: una línea con un nodo por avance */
+.chrono,
+.chrono-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chrono-month + .chrono-month {
+  margin-top: 6px;
+}
+.chrono-month-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 0 8px 30px;
+  background: var(--bg);
+  color: var(--silver);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.chrono-item {
+  position: relative;
+  padding: 0 0 18px 30px;
+}
+.chrono-item::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: color-mix(in srgb, var(--brand) 40%, var(--line));
+}
+.chrono-node {
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--brand);
+  border: 2px solid var(--bg);
+}
+.chrono-item--1 .chrono-node {
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  opacity: 0.8;
+}
+.chrono-item--3 .chrono-node {
+  left: 0;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 30%, transparent);
+}
+.chrono-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.chrono-item--3 .chrono-body {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
+}
+.chrono-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chrono-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.chrono-source {
+  font-size: 13px;
+  align-self: flex-start;
+}
+
+/* ---------- Administración ---------- */
+
+.admin {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-story {
+  border-left: 3px solid var(--brand);
+}
+.admin-story-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-story-title {
+  font-weight: 800;
+  font-size: 17px;
+}
+.admin-story-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+.admin-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--silver);
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin-textarea {
+  min-height: 0;
+  padding: 10px 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+.admin-proposal {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed color-mix(in srgb, var(--gold) 60%, var(--line));
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
+}
+.admin-new {
+  color: var(--ivory);
+}
+.admin-beats {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin-beat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+}
+.admin-beat--pending {
+  border: 1px dashed var(--gold);
+}
+.admin-beat-title {
+  font-weight: 700;
+}
+.admin-ok {
+  color: var(--success);
+}
+.admin-jobs ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+@media (max-width: 560px) {
+  .timeline {
+    --tl-label: 112px;
+  }
+  .timeline-name {
+    font-size: 12px;
+  }
+  .story-title {
+    font-size: 28px;
+  }
+}

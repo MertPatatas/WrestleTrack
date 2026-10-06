@@ -5,6 +5,7 @@ import { loadSchedule, type ScheduleResponse } from '../../../../lib/schedule/lo
 import { dbConfigured } from '../../../../lib/server/db';
 import { dispatch } from '../../../../lib/server/dispatch';
 import { pushConfigured } from '../../../../lib/server/push';
+import { processNextShow, type ProcessResult } from '../../../../lib/storylines/generate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,11 +50,18 @@ async function handle(request: NextRequest) {
     const data = await scheduleData(request);
     const result = await dispatch(data);
     // En la revisión horaria, también se buscan resultados y vídeos nuevos para "Ponme al día"
+    const minute = new Date().getUTCMinutes();
     let recaps: RefreshResult | { error: string } | undefined;
-    if (new Date().getUTCMinutes() < 10) {
+    if (minute < 10) {
       recaps = await refreshRecaps(data).catch((err) => ({ error: err instanceof Error ? err.message : String(err) }));
     }
-    return NextResponse.json({ ...result, recaps });
+    // A la media hora (otra ventana, para no pasar del tiempo máximo): la IA lee un show nuevo y
+    // propone avances de storylines para revisar
+    let storylines: ProcessResult | { error: string } | undefined;
+    if (minute >= 30 && minute < 40) {
+      storylines = await processNextShow().catch((err) => ({ error: err instanceof Error ? err.message : String(err) }));
+    }
+    return NextResponse.json({ ...result, recaps, storylines });
   } catch (err) {
     console.error('[dispatch]', err);
     return NextResponse.json({ error: 'Error al enviar avisos' }, { status: 500 });

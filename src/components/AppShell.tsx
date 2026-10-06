@@ -12,9 +12,11 @@ import { Wordmark } from './Wordmark';
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const t = useT();
-  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
-  // Calendario y "Ponme al día" ocupan todo el ancho (listas largas, vídeos)
-  const showRail = !pathname.startsWith('/shows') && !pathname.startsWith('/al-dia');
+  // La página de una storyline pertenece a "Ponme al día"
+  const section = pathname.startsWith('/storyline/') ? '/al-dia' : pathname;
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : section.startsWith(href));
+  // Calendario, "Ponme al día", storylines y administración ocupan todo el ancho (listas largas, vídeos, líneas de tiempo)
+  const showRail = !/^\/(shows|al-dia|storyline|admin)(\/|$)/.test(pathname);
 
   // Inicio de sesión y textos legales van solos, sin menús
   if (/^\/(login|privacidad|condiciones)(\/|$)/.test(pathname)) return <main className="main-bare">{children}</main>;

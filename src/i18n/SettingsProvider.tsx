@@ -36,6 +36,8 @@ interface SettingsContextValue {
   authReady: boolean;
   /** true si la app tiene cuentas (Supabase configurado); en desarrollo sin claves es false. */
   accountsEnabled: boolean;
+  /** La cuenta puede revisar y publicar storylines (ADMIN_EMAILS en el servidor). */
+  isAdmin: boolean;
   signOut: () => Promise<void>;
   /** Sincronización de ajustes con la cuenta. */
   sync: SyncState;
@@ -91,6 +93,7 @@ export function SettingsProvider({
   const [deviceTimeZone, setDeviceTimeZone] = useState<string | null>(null);
   const [user, setUser] = useState<SessionUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [sync, setSync] = useState<SyncState>('local');
   const [notifications, setNotifications] = useState<NotificationPrefs | null>(null);
   const syncedUser = useRef<string | null>(null);
@@ -190,6 +193,22 @@ export function SettingsProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, deviceTimeZone, deviceLang, deviceLocale, applyLocal]);
 
+  // ¿Es administrador? (lo decide el servidor; solo sirve para mostrar el acceso)
+  useEffect(() => {
+    if (!userId) {
+      setIsAdmin(false);
+      return;
+    }
+    let alive = true;
+    fetch('/api/admin/me', { cache: 'no-store' })
+      .then((res) => (res.ok ? (res.json() as Promise<{ admin: boolean }>) : { admin: false }))
+      .then((data) => alive && setIsAdmin(data.admin === true))
+      .catch(() => alive && setIsAdmin(false));
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
+
   const update = useCallback(
     (patch: Partial<UserSettings>) => {
       const next = { ...settings, ...patch };
@@ -238,6 +257,7 @@ export function SettingsProvider({
       user,
       authReady,
       accountsEnabled: supabaseConfig !== null,
+      isAdmin,
       signOut,
       sync,
       syncError,
@@ -253,6 +273,7 @@ export function SettingsProvider({
       deviceTimeZone,
       user,
       authReady,
+      isAdmin,
       supabaseConfig,
       signOut,
       sync,

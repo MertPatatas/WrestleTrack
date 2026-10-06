@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ScheduleResponse } from '../app/api/schedule/route';
 import { buildSchedule } from '../lib/schedule/build';
 import { useMounted } from '../lib/useMounted';
-import { getStorylines } from './mock';
 
 type AutoData = Pick<ScheduleResponse, 'episodes' | 'events' | 'showImages'>;
 
@@ -27,7 +26,7 @@ function loadAutoData(): Promise<AutoData | null> {
 }
 
 // Calendario (fuentes automáticas de /api/schedule + reglas de src/data/schedule.ts)
-// y storylines (aún de ejemplo). Las noticias reales viven en useNews.
+// Las noticias viven en useNews y las storylines en useStorylines.
 export function useAppData() {
   const mounted = useMounted();
   const [auto, setAuto] = useState<AutoData | null>(autoCache);
@@ -46,7 +45,6 @@ export function useAppData() {
     () =>
       mounted
         ? {
-            storylines: getStorylines(),
             shows: buildSchedule(Date.now(), {
               futureDays: 120,
               // Los grandes eventos se anuncian con muchos meses de antelación (Royal Rumble, WrestleMania...)

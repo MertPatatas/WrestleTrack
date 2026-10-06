@@ -1,33 +1,47 @@
 'use client';
 
+import Link from 'next/link';
 import type { Storyline } from '../data/types';
-import { useT } from '../i18n/SettingsProvider';
-import { useFormat } from '../lib/dates';
+import { useSettings } from '../i18n/SettingsProvider';
 import { PromotionBadge } from './PromotionBadge';
+import { formatDay, storyPeriod } from './storylines/format';
 
-export function StorylineCard({ item, now }: { item: Storyline; now: number }) {
-  const t = useT();
-  const fmt = useFormat();
-  const last = item.updates[0];
+// Tarjeta de una storyline: de qué va, quién participa y su último avance. Abre su página.
+export function StorylineCard({ item }: { item: Storyline }) {
+  const { t, locale } = useSettings();
+  const last = item.beats[item.beats.length - 1];
+  const keyMoments = item.beats.filter((b) => b.importance === 3).length;
+
   return (
-    <article className="card">
+    <Link href={`/storyline/${item.id}`} className={`card card--link story-card brand-${item.promotion}`}>
       <div className="card-meta card-meta--between">
         <PromotionBadge id={item.promotion} />
-        <span className="status">{item.status === 'en_curso' ? t('storylines.ongoing') : t('storylines.closed')}</span>
+        <span className={`story-status story-status--${item.status}`}>
+          {t(item.status === 'active' ? 'storylines.ongoing' : 'storylines.closed')}
+        </span>
       </div>
       <h3 className="card-title">{item.title}</h3>
-      <p className="card-text">{item.subtitle}</p>
+      <p className="muted small">{storyPeriod(item, locale, t)}</p>
+      <p className="card-text story-summary">{item.summary}</p>
+      {item.participants.length ? (
+        <p className="story-people">
+          {item.participants.slice(0, 5).join(' · ')}
+          {item.participants.length > 5 ? ` +${item.participants.length - 5}` : ''}
+        </p>
+      ) : null}
       {last ? (
-        <div className="update">
-          <p className={last.advanced ? 'verdict verdict--yes' : 'verdict'}>
-            {last.advanced
-              ? t('storylines.advanced', { show: last.showName })
-              : t('storylines.noAdvance', { show: last.showName })}
-            {fmt ? ` · ${fmt.timeAgo(last.date, now)}` : null}
-          </p>
-          <p className="card-text">{last.summary}</p>
+        <div className="story-last">
+          <span className="story-last-label">
+            {t('storylines.lastBeat')} · {formatDay(last.date, locale)}
+            {last.showName ? ` · ${last.showName}` : ''}
+          </span>
+          <span className="story-last-title">{last.title}</span>
         </div>
       ) : null}
-    </article>
+      <p className="muted small">
+        {t(item.beats.length === 1 ? 'storylines.beatsOne' : 'storylines.beats', { n: item.beats.length })}
+        {keyMoments ? ` · ${t('storylines.keyMoments', { n: keyMoments })}` : ''}
+      </p>
+    </Link>
   );
 }

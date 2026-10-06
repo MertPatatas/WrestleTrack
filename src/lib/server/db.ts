@@ -120,6 +120,48 @@ const SCHEMA = [
    )`,
   // Corrige resultados guardados como texto JSON en vez de lista (fallo de la primera versión)
   `update app.recaps set items = (items #>> '{}')::jsonb where jsonb_typeof(items) = 'string'`,
+  // Storylines: las redacta la IA (Gemini) a partir de las crónicas y un administrador las aprueba
+  `create table if not exists app.storylines (
+     id           text primary key,                     -- slug ("cody-rhodes-vs-gunther")
+     promotion    text not null,
+     title        text not null,
+     summary      text not null,                        -- en qué punto está (o cómo terminó)
+     participants text[] not null default '{}',
+     status       text not null default 'active',       -- 'active' | 'closed'
+     started_on   text,                                 -- 'YYYY-MM-DD'
+     ended_on     text,
+     related      text[] not null default '{}',         -- storylines que sirven de contexto
+     published    boolean not null default false,       -- false = propuesta pendiente de revisar
+     pending      jsonb,                                -- cambios propuestos por la IA ({ summary, status })
+     created_at   timestamptz not null default now(),
+     updated_at   timestamptz not null default now()
+   )`,
+  `create table if not exists app.storyline_beats (
+     id           bigserial primary key,
+     storyline_id text not null references app.storylines (id) on delete cascade,
+     date         text not null,                        -- 'YYYY-MM-DD'
+     show_id      text,
+     show_name    text,
+     title        text not null,
+     text         text not null,
+     kind         text not null default 'other',
+     importance   int not null default 2,               -- 1 menor · 2 normal · 3 clave
+     source_url   text,
+     status       text not null default 'pending',      -- 'pending' | 'approved' | 'rejected'
+     created_at   timestamptz not null default now()
+   )`,
+  `create index if not exists storyline_beats_story_idx on app.storyline_beats (storyline_id, date)`,
+  // Shows ya procesados por la IA (para no repetirlos)
+  `create table if not exists app.storyline_jobs (
+     show_id      text primary key,
+     source_url   text not null,
+     status       text not null,                        -- 'done' | 'error'
+     detail       text,
+     processed_at timestamptz not null default now()
+   )`,
+  `alter table app.storylines enable row level security`,
+  `alter table app.storyline_beats enable row level security`,
+  `alter table app.storyline_jobs enable row level security`,
   `alter table app.recaps enable row level security`,
   `alter table app.videos enable row level security`,
   `alter table app.meta enable row level security`,

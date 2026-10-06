@@ -159,6 +159,24 @@ function fromLiveCoverage(lines: string[]): RecapItem[] {
   return items;
 }
 
+/**
+ * Texto de la crónica completa (promos, ataques, combates…), para que la IA identifique cómo
+ * avanzan las storylines. Desde el título del artículo hasta el final de la cobertura.
+ */
+export async function fetchArticleText(url: string, maxChars = 24_000): Promise<string> {
+  const lines = toLines(await getText(url));
+  const first = lines.findIndex((l) => /^## .*(cobertura|resultados)/i.test(l));
+  const end = lines.findIndex(
+    (l, i) => i > first && /^## Sobre el autor|^Síguenos en Google News|^Please enable JavaScript|^\*\*Etiquetas relacionadas/i.test(l),
+  );
+  const body = lines.slice(Math.max(first, 0), end > 0 ? end : undefined);
+  return body
+    .map((l) => l.replace(/\*\*/g, ''))
+    .filter((l) => l.length > 2 && !/^Noticia relacionada$|^Imagen:/i.test(l))
+    .join('\n')
+    .slice(0, maxChars);
+}
+
 /** Resultados de un artículo de Solowrestling (vacío si no se reconoce el formato). */
 export async function fetchArticleResults(url: string): Promise<RecapItem[]> {
   const lines = toLines(await getText(url));
